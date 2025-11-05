@@ -25,12 +25,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-// --- NUEVOS IMPORTS ---
 import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Train
-// --- FIN NUEVOS IMPORTS ---
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -68,21 +66,26 @@ import com.tecsup.metrolimago.data.database.Station
 import com.tecsup.metrolimago.data.database.TransportLine
 import com.tecsup.metrolimago.viewmodel.MainViewModel
 
-// Coordenadas de Lima, para centrar el mapa
 private val limaCenter = LatLng(-12.046374, -77.042793)
 
-// Habilitamos el botón de "Mi Ubicación" que provee Google Maps
 private val mapUiSettings = MapUiSettings(
     zoomControlsEnabled = false,
     myLocationButtonEnabled = true
 )
 
+/**
+ * --- ¡ARREGLADO! ---
+ * Añadimos los 3 nuevos parámetros que vienen desde AppNavigation
+ */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun HomeScreen(
     viewModel: MainViewModel,
     onNavigateToPlanner: () -> Unit,
-    onLineClicked: (String) -> Unit
+    onLineClicked: (String) -> Unit,
+    onStationClicked: (String) -> Unit,  // <-- PARÁMETRO AÑADIDO
+    onViewAllLines: () -> Unit,         // <-- PARÁMETRO AÑADIDO
+    onViewAllStations: () -> Unit      // <-- PARÁMETRO AÑADIDO
 ) {
     val permissionState = rememberMultiplePermissionsState(
         permissions = listOf(
@@ -100,7 +103,9 @@ fun HomeScreen(
             viewModel = viewModel,
             onNavigateToPlanner = onNavigateToPlanner,
             onLineClicked = onLineClicked,
-            onStationClicked = { /* TODO: Navegar a detalle de estación */ }
+            onStationClicked = onStationClicked,    // <-- PASAMOS EL PARÁMETRO
+            onViewAllLines = onViewAllLines,       // <-- PASAMOS EL PARÁMETRO
+            onViewAllStations = onViewAllStations  // <-- PASAMOS EL PARÁMETRO
         )
     } else {
         PermissionDeniedScreen(
@@ -110,14 +115,17 @@ fun HomeScreen(
 }
 
 /**
- * El contenido real de la pantalla (el mapa)
+ * --- ¡ARREGLADO! ---
+ * Añadimos los parámetros para pasarlos al HomeBottomPanel
  */
 @Composable
 fun HomeScreenContent(
     viewModel: MainViewModel,
     onNavigateToPlanner: () -> Unit,
     onLineClicked: (String) -> Unit,
-    onStationClicked: (String) -> Unit // Nueva acción
+    onStationClicked: (String) -> Unit,
+    onViewAllLines: () -> Unit,
+    onViewAllStations: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val cameraPositionState = rememberCameraPositionState {
@@ -130,8 +138,6 @@ fun HomeScreenContent(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-
-            // --- 1. EL MAPA (Al fondo) ---
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
@@ -147,7 +153,6 @@ fun HomeScreenContent(
                 }
             }
 
-            // --- 2. EL BUSCADOR (Arriba) ---
             HomeSearchBar(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
@@ -156,26 +161,29 @@ fun HomeScreenContent(
                 onClicked = onNavigateToPlanner
             )
 
-            // --- 3. EL PANEL INFERIOR (Abajo) ---
             HomeBottomPanel(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth(),
                 lines = uiState.allLines,
-                // Tomamos solo las 2 primeras estaciones como "populares"
                 popularStations = uiState.allStations.take(2),
                 onLineClicked = onLineClicked,
                 onStationClicked = onStationClicked,
-                onViewAllLines = { /* TODO: Navegar a lista de líneas */ },
-                onViewAllStations = { /* TODO: Navegar a lista de estaciones */ }
+                onViewAllLines = onViewAllLines,         // <-- CONECTADO
+                onViewAllStations = onViewAllStations    // <-- CONECTADO
             )
         }
     }
 }
 
+// ... (El resto del archivo: HomeSearchBar, HomeBottomPanel, SectionHeader, LineaCard,
+//      EstacionCard, PermissionDeniedScreen ... pégalos aquí tal como los tenías)
+// --- COPIA Y PEGA EL RESTO DE TU HOMESCREEN.KT ORIGINAL AQUÍ ---
+// (Los composables que ya te había dado: HomeSearchBar, HomeBottomPanel, etc.)
+
 /**
  * NUEVO: El "falso" buscador que flota arriba del mapa.
- * Reemplaza al antiguo SearchBarUI
+ * (Sin cambios)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -222,7 +230,7 @@ fun HomeSearchBar(
 
 /**
  * NUEVO: El panel inferior deslizable.
- * Reemplaza al antiguo BottomPanel
+ * (Sin cambios)
  */
 @Composable
 fun HomeBottomPanel(
@@ -263,7 +271,7 @@ fun HomeBottomPanel(
             item {
                 SectionHeader(
                     title = "Líneas",
-                    onViewAllClicked = onViewAllLines
+                    onViewAllClicked = onViewAllLines // <-- CONECTADO
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 LazyRow(
@@ -291,7 +299,7 @@ fun HomeBottomPanel(
             item {
                 SectionHeader(
                     title = "Estaciones",
-                    onViewAllClicked = onViewAllStations
+                    onViewAllClicked = onViewAllStations // <-- CONECTADO
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Column(
@@ -312,6 +320,7 @@ fun HomeBottomPanel(
 
 /**
  * NUEVO: Cabecera para las secciones "Líneas" y "Estaciones"
+ * (Sin cambios)
  */
 @Composable
 fun SectionHeader(
@@ -342,6 +351,7 @@ fun SectionHeader(
 
 /**
  * NUEVO: Tarjeta horizontal para las líneas
+ * (Sin cambios)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -385,6 +395,7 @@ fun LineaCard(
 
 /**
  * NUEVO: Tarjeta vertical para las estaciones
+ * (Sin cambios)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

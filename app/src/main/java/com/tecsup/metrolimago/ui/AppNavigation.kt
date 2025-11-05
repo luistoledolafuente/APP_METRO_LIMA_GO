@@ -6,21 +6,29 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+// --- AÑADIR IMPORTS DE NUEVAS PANTALLAS ---
+import com.tecsup.metrolimago.ui.screens.AllLinesScreen
+import com.tecsup.metrolimago.ui.screens.AllStationsScreen
 import com.tecsup.metrolimago.ui.screens.HomeScreen
 import com.tecsup.metrolimago.ui.screens.LineDetailScreen
 import com.tecsup.metrolimago.ui.screens.RoutePlannerScreen
 import com.tecsup.metrolimago.ui.screens.RouteResultScreen
+import com.tecsup.metrolimago.ui.screens.SplashScreen // (Import del Splash)
 import com.tecsup.metrolimago.ui.screens.StationDetailScreen
 import com.tecsup.metrolimago.viewmodel.MainViewModel
 
 /**
  * Define las rutas de navegación de forma segura (type-safe).
- * (Sin cambios)
  */
 sealed class Screen(val route: String) {
+    object Splash : Screen("splash") // (Ruta del Splash)
     object Home : Screen("home")
     object RoutePlanner : Screen("route_planner")
     object RouteResult : Screen("route_result")
+
+    // --- AÑADIR NUEVAS RUTAS ---
+    object AllLines : Screen("all_lines")
+    object AllStations : Screen("all_stations")
 
     object LineDetail : Screen("line_detail/{lineId}") {
         fun createRoute(lineId: String) = "line_detail/$lineId"
@@ -33,7 +41,8 @@ sealed class Screen(val route: String) {
 
 /**
  * El "NavHost" principal de la aplicación.
- * ACTUALIZADO para limpiar el estado del ViewModel.
+ * ACTUALIZADO para conectar Splash y "Ver todo".
+ * (Esta es tu lógica original de navegación)
  */
 @Composable
 fun AppNavigation(viewModel: MainViewModel) {
@@ -41,8 +50,19 @@ fun AppNavigation(viewModel: MainViewModel) {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route
+        startDestination = Screen.Splash.route // (Iniciamos en Splash)
     ) {
+
+        // --- Pantalla Splash ---
+        composable(Screen.Splash.route) {
+            SplashScreen(
+                onTimeout = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                }
+            )
+        }
 
         // --- Pantalla Principal (Home) ---
         composable(Screen.Home.route) {
@@ -53,8 +73,45 @@ fun AppNavigation(viewModel: MainViewModel) {
                     navController.navigate(Screen.RoutePlanner.route)
                 },
                 onLineClicked = { lineId ->
-                    // No necesitamos limpiar nada aquí, solo navegar
+                    viewModel.clearSelectedLine() // (Esta es tu lógica original)
                     navController.navigate(Screen.LineDetail.createRoute(lineId))
+                },
+                // --- CONECTAR LOS BOTONES "VER TODO" ---
+                onStationClicked = { stationId ->
+                    navController.navigate(Screen.StationDetail.createRoute(stationId))
+                },
+                onViewAllLines = {
+                    navController.navigate(Screen.AllLines.route)
+                },
+                onViewAllStations = {
+                    navController.navigate(Screen.AllStations.route)
+                }
+            )
+        }
+
+        // --- AÑADIR LOS COMPOSABLES DE LAS NUEVAS PANTALLAS ---
+
+        // --- Pantalla "Todas las Líneas" ---
+        composable(Screen.AllLines.route) {
+            AllLinesScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onLineClicked = { lineId ->
+                    // Va al detalle de la línea
+                    viewModel.clearSelectedLine()
+                    navController.navigate(Screen.LineDetail.createRoute(lineId))
+                }
+            )
+        }
+
+        // --- Pantalla "Todas las Estaciones" ---
+        composable(Screen.AllStations.route) {
+            AllStationsScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onStationClicked = { stationId ->
+                    // Va al detalle de la estación
+                    navController.navigate(Screen.StationDetail.createRoute(stationId))
                 }
             )
         }
@@ -70,8 +127,7 @@ fun AppNavigation(viewModel: MainViewModel) {
                     viewModel = viewModel,
                     lineId = lineId,
                     onNavigateBack = {
-                        // --- ¡AQUÍ ESTÁ EL ARREGLO! ---
-                        // Limpiamos la lista de estaciones al salir
+                        // ¡Esta es tu lógica original!
                         viewModel.clearSelectedLine()
                         navController.popBackStack()
                     },
@@ -103,8 +159,8 @@ fun AppNavigation(viewModel: MainViewModel) {
             RouteResultScreen(
                 viewModel = viewModel,
                 onNavigateBack = {
+                    // ¡Esta es tu lógica original!
                     viewModel.clearRouteSearch()
-                    // Regresamos hasta la pantalla de Home
                     navController.popBackStack(Screen.Home.route, inclusive = false)
                 }
             )

@@ -42,6 +42,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.compose.foundation.layout)
     // --- Definimos nuestras versiones aquí ---
     val roomVersion = "2.6.1"
     val navVersion = "2.7.7"
