@@ -1,0 +1,31 @@
+Archivos de configuración de IDE (Android Studio)
+
+*.iml
+.idea/
+.idea/caches/
+.idea/libraries/
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+
+Archivos de Gradle
+
+.gradle/
+build/
+
+Archivos de configuración local (¡EL MÁS IMPORTANTE!)
+
+Este archivo contendrá nuestra clave de API secreta
+
+local.properties
+
+Logs
+
+*.log
+
+Archivos del sistema operativo
+
+.DS_Store
+Thumbs.db
