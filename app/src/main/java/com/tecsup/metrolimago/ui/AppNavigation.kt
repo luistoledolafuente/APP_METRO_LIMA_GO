@@ -6,14 +6,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-// --- AÑADIR IMPORTS DE NUEVAS PANTALLAS ---
 import com.tecsup.metrolimago.ui.screens.AllLinesScreen
 import com.tecsup.metrolimago.ui.screens.AllStationsScreen
 import com.tecsup.metrolimago.ui.screens.HomeScreen
 import com.tecsup.metrolimago.ui.screens.LineDetailScreen
 import com.tecsup.metrolimago.ui.screens.RoutePlannerScreen
 import com.tecsup.metrolimago.ui.screens.RouteResultScreen
-import com.tecsup.metrolimago.ui.screens.SplashScreen // (Import del Splash)
+// --- 1. AÑADIR IMPORTS ---
+import com.tecsup.metrolimago.ui.screens.SettingsScreen
+import com.tecsup.metrolimago.ui.screens.SplashScreen
 import com.tecsup.metrolimago.ui.screens.StationDetailScreen
 import com.tecsup.metrolimago.viewmodel.MainViewModel
 
@@ -21,14 +22,15 @@ import com.tecsup.metrolimago.viewmodel.MainViewModel
  * Define las rutas de navegación de forma segura (type-safe).
  */
 sealed class Screen(val route: String) {
-    object Splash : Screen("splash") // (Ruta del Splash)
+    object Splash : Screen("splash")
     object Home : Screen("home")
     object RoutePlanner : Screen("route_planner")
     object RouteResult : Screen("route_result")
-
-    // --- AÑADIR NUEVAS RUTAS ---
     object AllLines : Screen("all_lines")
     object AllStations : Screen("all_stations")
+
+    // --- 2. AÑADIR NUEVA RUTA ---
+    object Settings : Screen("settings")
 
     object LineDetail : Screen("line_detail/{lineId}") {
         fun createRoute(lineId: String) = "line_detail/$lineId"
@@ -41,8 +43,7 @@ sealed class Screen(val route: String) {
 
 /**
  * El "NavHost" principal de la aplicación.
- * ACTUALIZADO para conectar Splash y "Ver todo".
- * (Esta es tu lógica original de navegación)
+ * ACTUALIZADO para conectar la pantalla de Ajustes.
  */
 @Composable
 fun AppNavigation(viewModel: MainViewModel) {
@@ -50,7 +51,7 @@ fun AppNavigation(viewModel: MainViewModel) {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Splash.route // (Iniciamos en Splash)
+        startDestination = Screen.Splash.route
     ) {
 
         // --- Pantalla Splash ---
@@ -73,10 +74,9 @@ fun AppNavigation(viewModel: MainViewModel) {
                     navController.navigate(Screen.RoutePlanner.route)
                 },
                 onLineClicked = { lineId ->
-                    viewModel.clearSelectedLine() // (Esta es tu lógica original)
+                    viewModel.clearSelectedLine()
                     navController.navigate(Screen.LineDetail.createRoute(lineId))
                 },
-                // --- CONECTAR LOS BOTONES "VER TODO" ---
                 onStationClicked = { stationId ->
                     navController.navigate(Screen.StationDetail.createRoute(stationId))
                 },
@@ -85,38 +85,45 @@ fun AppNavigation(viewModel: MainViewModel) {
                 },
                 onViewAllStations = {
                     navController.navigate(Screen.AllStations.route)
+                },
+                // --- 3. CONECTAR EL BOTÓN DE AJUSTES ---
+                onNavigateToSettings = {
+                    navController.navigate(Screen.Settings.route)
                 }
             )
         }
 
-        // --- AÑADIR LOS COMPOSABLES DE LAS NUEVAS PANTALLAS ---
+        // --- 4. AÑADIR EL COMPOSABLE DE LA NUEVA PANTALLA ---
+        composable(Screen.Settings.route) {
+            SettingsScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
 
-        // --- Pantalla "Todas las Líneas" ---
+        // --- (El resto de tus pantallas no cambian) ---
+
         composable(Screen.AllLines.route) {
             AllLinesScreen(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onLineClicked = { lineId ->
-                    // Va al detalle de la línea
                     viewModel.clearSelectedLine()
                     navController.navigate(Screen.LineDetail.createRoute(lineId))
                 }
             )
         }
 
-        // --- Pantalla "Todas las Estaciones" ---
         composable(Screen.AllStations.route) {
             AllStationsScreen(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onStationClicked = { stationId ->
-                    // Va al detalle de la estación
                     navController.navigate(Screen.StationDetail.createRoute(stationId))
                 }
             )
         }
 
-        // --- Pantalla de Detalle de Línea ---
         composable(
             route = Screen.LineDetail.route,
             arguments = listOf(navArgument("lineId") { type = NavType.StringType })
@@ -127,7 +134,6 @@ fun AppNavigation(viewModel: MainViewModel) {
                     viewModel = viewModel,
                     lineId = lineId,
                     onNavigateBack = {
-                        // ¡Esta es tu lógica original!
                         viewModel.clearSelectedLine()
                         navController.popBackStack()
                     },
@@ -140,7 +146,6 @@ fun AppNavigation(viewModel: MainViewModel) {
             }
         }
 
-        // --- Pantalla de Planificar Ruta ---
         composable(Screen.RoutePlanner.route) {
             RoutePlannerScreen(
                 viewModel = viewModel,
@@ -154,19 +159,16 @@ fun AppNavigation(viewModel: MainViewModel) {
             )
         }
 
-        // --- Pantalla de Resultado de Ruta ---
         composable(Screen.RouteResult.route) {
             RouteResultScreen(
                 viewModel = viewModel,
                 onNavigateBack = {
-                    // ¡Esta es tu lógica original!
                     viewModel.clearRouteSearch()
                     navController.popBackStack(Screen.Home.route, inclusive = false)
                 }
             )
         }
 
-        // --- Pantalla de Detalle de Estación ---
         composable(
             route = Screen.StationDetail.route,
             arguments = listOf(navArgument("stationId") { type = NavType.StringType })

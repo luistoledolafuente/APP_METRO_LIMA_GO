@@ -6,18 +6,7 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -25,24 +14,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+// --- NUEVOS IMPORTS ---
+import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Train
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+// --- FIN NUEVOS IMPORTS ---
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,26 +36,21 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.*
 import com.tecsup.metrolimago.data.database.Station
 import com.tecsup.metrolimago.data.database.TransportLine
 import com.tecsup.metrolimago.viewmodel.MainViewModel
 
+// (limaCenter y mapUiSettings sin cambios)
 private val limaCenter = LatLng(-12.046374, -77.042793)
-
 private val mapUiSettings = MapUiSettings(
     zoomControlsEnabled = false,
     myLocationButtonEnabled = true
 )
 
 /**
- * --- ¡ARREGLADO! ---
- * Añadimos los 3 nuevos parámetros que vienen desde AppNavigation
+ * --- ¡ACTUALIZADO! ---
+ * Añadimos el nuevo parámetro onNavigateToSettings
  */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -83,9 +58,10 @@ fun HomeScreen(
     viewModel: MainViewModel,
     onNavigateToPlanner: () -> Unit,
     onLineClicked: (String) -> Unit,
-    onStationClicked: (String) -> Unit,  // <-- PARÁMETRO AÑADIDO
-    onViewAllLines: () -> Unit,         // <-- PARÁMETRO AÑADIDO
-    onViewAllStations: () -> Unit      // <-- PARÁMETRO AÑADIDO
+    onStationClicked: (String) -> Unit,
+    onViewAllLines: () -> Unit,
+    onViewAllStations: () -> Unit,
+    onNavigateToSettings: () -> Unit // <-- PARÁMETRO AÑADIDO
 ) {
     val permissionState = rememberMultiplePermissionsState(
         permissions = listOf(
@@ -103,9 +79,10 @@ fun HomeScreen(
             viewModel = viewModel,
             onNavigateToPlanner = onNavigateToPlanner,
             onLineClicked = onLineClicked,
-            onStationClicked = onStationClicked,    // <-- PASAMOS EL PARÁMETRO
-            onViewAllLines = onViewAllLines,       // <-- PASAMOS EL PARÁMETRO
-            onViewAllStations = onViewAllStations  // <-- PASAMOS EL PARÁMETRO
+            onStationClicked = onStationClicked,
+            onViewAllLines = onViewAllLines,
+            onViewAllStations = onViewAllStations,
+            onNavigateToSettings = onNavigateToSettings // <-- PASAMOS EL PARÁMETRO
         )
     } else {
         PermissionDeniedScreen(
@@ -115,8 +92,8 @@ fun HomeScreen(
 }
 
 /**
- * --- ¡ARREGLADO! ---
- * Añadimos los parámetros para pasarlos al HomeBottomPanel
+ * --- ¡ACTUALIZADO! ---
+ * Añadimos el parámetro para pasarlo al HomeSearchBar
  */
 @Composable
 fun HomeScreenContent(
@@ -125,7 +102,8 @@ fun HomeScreenContent(
     onLineClicked: (String) -> Unit,
     onStationClicked: (String) -> Unit,
     onViewAllLines: () -> Unit,
-    onViewAllStations: () -> Unit
+    onViewAllStations: () -> Unit,
+    onNavigateToSettings: () -> Unit // <-- PARÁMETRO AÑADIDO
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val cameraPositionState = rememberCameraPositionState {
@@ -138,6 +116,7 @@ fun HomeScreenContent(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
@@ -153,14 +132,17 @@ fun HomeScreenContent(
                 }
             }
 
+            // --- 2. EL BUSCADOR (Arriba) ---
             HomeSearchBar(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
                     .padding(16.dp),
-                onClicked = onNavigateToPlanner
+                onClicked = onNavigateToPlanner,
+                onSettingsClicked = onNavigateToSettings // <-- CONECTADO
             )
 
+            // --- 3. EL PANEL INFERIOR (Abajo) ---
             HomeBottomPanel(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -169,27 +151,23 @@ fun HomeScreenContent(
                 popularStations = uiState.allStations.take(2),
                 onLineClicked = onLineClicked,
                 onStationClicked = onStationClicked,
-                onViewAllLines = onViewAllLines,         // <-- CONECTADO
-                onViewAllStations = onViewAllStations    // <-- CONECTADO
+                onViewAllLines = onViewAllLines,
+                onViewAllStations = onViewAllStations
             )
         }
     }
 }
 
-// ... (El resto del archivo: HomeSearchBar, HomeBottomPanel, SectionHeader, LineaCard,
-//      EstacionCard, PermissionDeniedScreen ... pégalos aquí tal como los tenías)
-// --- COPIA Y PEGA EL RESTO DE TU HOMESCREEN.KT ORIGINAL AQUÍ ---
-// (Los composables que ya te había dado: HomeSearchBar, HomeBottomPanel, etc.)
-
 /**
- * NUEVO: El "falso" buscador que flota arriba del mapa.
- * (Sin cambios)
+ * --- ¡ACTUALIZADO! ---
+ * Añadimos onSettingsClicked y el IconButton de Perfil
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeSearchBar(
     modifier: Modifier = Modifier,
-    onClicked: () -> Unit
+    onClicked: () -> Unit,
+    onSettingsClicked: () -> Unit // <-- PARÁMETRO AÑADIDO
 ) {
     Card(
         onClick = onClicked,
@@ -204,16 +182,16 @@ fun HomeSearchBar(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
+            Icon( // Icono de Búsqueda
                 imageVector = Icons.Default.Search,
                 contentDescription = "Buscar",
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(28.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
-            Column {
+            Column(modifier = Modifier.weight(1f)) { // Textos
                 Text(
-                    text = "Hola, Carlos", // Basado en tu diseño
+                    text = "Hola, Carlos",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -224,14 +202,28 @@ fun HomeSearchBar(
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // --- ¡BOTÓN DE AJUSTES AÑADIDO! ---
+            IconButton(
+                onClick = onSettingsClicked,
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.AccountCircle,
+                    contentDescription = "Ajustes",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
     }
 }
 
-/**
- * NUEVO: El panel inferior deslizable.
- * (Sin cambios)
- */
+// --- El resto de los composables (HomeBottomPanel, SectionHeader, LineaCard,
+//      EstacionCard, PermissionDeniedScreen) permanecen EXACTAMENTE IGUAL ---
+// ... (puedes dejar los que ya tenías)
+
 @Composable
 fun HomeBottomPanel(
     modifier: Modifier = Modifier,
@@ -248,14 +240,12 @@ fun HomeBottomPanel(
         shadowElevation = 8.dp,
         color = MaterialTheme.colorScheme.surface
     ) {
-        // Usamos LazyColumn para el scroll si el contenido crece
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp), // Padding inferior
+                .padding(bottom = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // "Handle" del Bottom Sheet
             item {
                 Box(
                     modifier = Modifier
@@ -266,12 +256,10 @@ fun HomeBottomPanel(
                         .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
                 )
             }
-
-            // --- Sección de Líneas ---
             item {
                 SectionHeader(
                     title = "Líneas",
-                    onViewAllClicked = onViewAllLines // <-- CONECTADO
+                    onViewAllClicked = onViewAllLines
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 LazyRow(
@@ -286,20 +274,16 @@ fun HomeBottomPanel(
                     }
                 }
             }
-
-            // --- Separador ---
             item {
                 Divider(
                     modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
                     color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                 )
             }
-
-            // --- Sección de Estaciones ---
             item {
                 SectionHeader(
                     title = "Estaciones",
-                    onViewAllClicked = onViewAllStations // <-- CONECTADO
+                    onViewAllClicked = onViewAllStations
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Column(
@@ -318,10 +302,6 @@ fun HomeBottomPanel(
     }
 }
 
-/**
- * NUEVO: Cabecera para las secciones "Líneas" y "Estaciones"
- * (Sin cambios)
- */
 @Composable
 fun SectionHeader(
     title: String,
@@ -349,10 +329,6 @@ fun SectionHeader(
     }
 }
 
-/**
- * NUEVO: Tarjeta horizontal para las líneas
- * (Sin cambios)
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LineaCard(
@@ -362,8 +338,8 @@ fun LineaCard(
     Card(
         onClick = onClicked,
         modifier = Modifier
-            .width(180.dp) // Ancho fijo para tarjetas horizontales
-            .height(100.dp), // Altura fija
+            .width(180.dp)
+            .height(100.dp),
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
     ) {
@@ -371,7 +347,7 @@ fun LineaCard(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(12.dp),
-            verticalArrangement = Arrangement.SpaceBetween // Alinea contenido
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
             Icon(
                 imageVector = Icons.Outlined.Train,
@@ -393,10 +369,6 @@ fun LineaCard(
     }
 }
 
-/**
- * NUEVO: Tarjeta vertical para las estaciones
- * (Sin cambios)
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EstacionCard(
@@ -433,7 +405,7 @@ fun EstacionCard(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Línea ${station.lineId}", // Asumiendo que quieres mostrar la línea
+                    text = "Línea ${station.lineId}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -448,10 +420,6 @@ fun EstacionCard(
 }
 
 
-/**
- * Pantalla que se muestra si el usuario denegó el permiso de GPS.
- * (Sin cambios)
- */
 @Composable
 fun PermissionDeniedScreen(
     onGrantPermission: () -> Unit
