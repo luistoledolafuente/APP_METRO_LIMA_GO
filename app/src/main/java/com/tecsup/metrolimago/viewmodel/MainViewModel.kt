@@ -1,4 +1,4 @@
-package com.tecsup.metrolimago.viewmodel
+package com.tecsup.metrolimago.viewmodel // Asegúrate que coincida con tu paquete
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -22,12 +22,15 @@ import kotlinx.coroutines.launch
 
 /**
  * Estado de la UI (User Interface).
- * Contiene todos los datos que las pantallas necesitan para dibujarse.
+ * (¡ACTUALIZADO CON FAVORITOS!)
  */
 data class AppUiState(
     // Listas principales (cargadas al inicio)
     val allLines: List<TransportLine> = emptyList(),
     val allStations: List<Station> = emptyList(),
+
+    // --- ¡CAMBIO AÑADIDO! ---
+    val favoriteStations: List<Station> = emptyList(),
 
     // Estado para el Detalle de Línea
     val selectedLineStations: List<Station> = emptyList(),
@@ -40,12 +43,12 @@ data class AppUiState(
     val routeErrorMessage: String? = null,
 
     // Estado de Carga General
-    val isAppLoading: Boolean = true // Empezamos en 'cargando'
+    val isAppLoading: Boolean = true
 )
 
 /**
  * ViewModel principal de la aplicación.
- * CORREGIDO para evitar bucles de recarga (flickering).
+ * (¡ACTUALIZADO CON LÓGICA DE FAVORITOS!)
  */
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -57,38 +60,38 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val uiState: StateFlow<AppUiState> = _uiState.asStateFlow()
 
     init {
-        // Obtenemos la instancia de la base de datos
         val database = AppDatabase.getDatabase(application)
-
         repository = OfflineRepository(database.lineDao(), database.stationDao())
         routeFinder = RouteFinder(repository)
 
-        // Cargamos los datos iniciales (las listas de líneas y estaciones)
         loadInitialAppData()
     }
 
     // --- 2. CARGA DE DATOS ---
 
     /**
-     * Carga las listas de líneas y estaciones (datos globales)
+     * Carga los datos globales (líneas, estaciones Y FAVORITOS)
      * una sola vez cuando se inicia el ViewModel.
      */
     private fun loadInitialAppData() {
         viewModelScope.launch {
-            // 'combine' nos permite "escuchar" a varios Flujos (Flows) a la vez
+            // --- ¡CAMBIO AÑADIDO! ---
+            // Ahora 'combine' también escucha a 'getFavoriteStations'
             combine(
                 repository.getAllLines(),
-                repository.getAllStations()
-            ) { lines, stations ->
-                // Creamos un estado temporal solo con estos datos
-                Pair(lines, stations)
-            }.collect { (lines, stations) ->
+                repository.getAllStations(),
+                repository.getFavoriteStations() // <-- La nueva fuente de datos
+            ) { lines, stations, favorites ->
+                // Creamos un objeto temporal
+                Triple(lines, stations, favorites)
+            }.collect { (lines, stations, favorites) ->
                 // Actualizamos el estado de la UI con los nuevos datos
                 _uiState.update { currentState ->
                     currentState.copy(
                         allLines = lines,
                         allStations = stations,
-                        isAppLoading = false // ¡Ya cargamos!
+                        favoriteStations = favorites, // <-- Actualizamos favoritos
+                        isAppLoading = false
                     )
                 }
             }
@@ -96,19 +99,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * ¡NUEVA FUNCIÓN!
      * Carga las estaciones para una línea específica.
-     * Esto ahora se llama DESDE la pantalla (LineDetailScreen).
+     * (Sin cambios)
      */
     fun loadStationsForLine(lineId: String) {
-        // 1. Ponemos el estado en "Cargando"
         _uiState.update { it.copy(isLineDetailLoading = true) }
 
         viewModelScope.launch {
-            // 2. Usamos el Flow, pero solo tomamos el *primer* valor (la lista actual)
+            // Usamos 'stateIn' para convertir el Flow frío en caliente y tomar el valor actual
             val stations = repository.getStationsByLine(lineId).stateIn(viewModelScope).value
 
-            // 3. Actualizamos el estado con la lista y quitamos "Cargando"
             _uiState.update {
                 it.copy(
                     selectedLineStations = stations,
@@ -119,8 +119,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * ¡NUEVA FUNCIÓN!
      * Limpia la lista de estaciones cuando salimos de la pantalla de detalle.
+     * (Sin cambios)
      */
     fun clearSelectedLine() {
         _uiState.update {
@@ -133,6 +133,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
 
     // --- 3. ACCIONES DE LA UI (Planificador de Ruta) ---
+    // (Sin cambios en esta sección)
 
     fun onOriginStationSelected(station: Station) {
         _uiState.update { currentState ->
@@ -188,10 +189,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /**
-     * ¡NUEVA FUNCIÓN!
-     * Limpia la selección de ruta al salir.
-     */
     fun clearRouteSearch() {
         _uiState.update { currentState ->
             currentState.copy(
@@ -203,21 +200,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Esta función ya no es necesaria, la lógica se movió a 'loadStationsForLine'
-    /*
-    fun getStationsForLine(lineId: String): StateFlow<List<Station>> {
-        return repository.getStationsByLine(lineId)
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000L),
-                initialValue = emptyList()
-            )
+    // --- 4. ¡NUEVA SECCIÓN DE ACCIONES! (Favoritos) ---
+
+    /**
+     * ¡NUEVA FUNCIÓN!
+     * Cambia el estado de favorito de una estación.
+     * Es llamada desde la UI (ej. StationDetailScreen).
+     */
+    fun toggleFavorite(station: Station) {
+        viewModelScope.launch {
+            // Llamamos al repositorio para que actualice la base de datos.
+            // El 'Flow' en loadInitialAppData se encargará de
+            // actualizar automáticamente la UI (las listas 'allStations' y 'favoriteStations').
+            repository.updateFavoriteStatus(station.id, !station.isFavorite)
+        }
     }
-    */
 }
 
 /**
- * Factory (Fábrica) para poder crear el MainViewModel pasándole el 'Application'
+ * Factory (Fábrica) para el ViewModel
  * (Sin cambios)
  */
 class MainViewModelFactory(private val application: Application) : ViewModelProvider.Factory {

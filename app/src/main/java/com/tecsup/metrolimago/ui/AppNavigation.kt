@@ -1,10 +1,11 @@
-package com.tecsup.metrolimago.ui
+package com.tecsup.metrolimago.ui // Asegúrate que coincida con tu paquete
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavHostController // <-- 1. IMPORTAR ESTO
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+// import androidx.navigation.compose.rememberNavController // <-- 2. YA NO SE USA AQUÍ
 import androidx.navigation.navArgument
 import com.tecsup.metrolimago.ui.screens.AllLinesScreen
 import com.tecsup.metrolimago.ui.screens.AllStationsScreen
@@ -12,7 +13,6 @@ import com.tecsup.metrolimago.ui.screens.HomeScreen
 import com.tecsup.metrolimago.ui.screens.LineDetailScreen
 import com.tecsup.metrolimago.ui.screens.RoutePlannerScreen
 import com.tecsup.metrolimago.ui.screens.RouteResultScreen
-// --- 1. AÑADIR IMPORTS ---
 import com.tecsup.metrolimago.ui.screens.SettingsScreen
 import com.tecsup.metrolimago.ui.screens.SplashScreen
 import com.tecsup.metrolimago.ui.screens.StationDetailScreen
@@ -20,6 +20,7 @@ import com.tecsup.metrolimago.viewmodel.MainViewModel
 
 /**
  * Define las rutas de navegación de forma segura (type-safe).
+ * (El código de tu compañero se queda igual)
  */
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
@@ -28,8 +29,6 @@ sealed class Screen(val route: String) {
     object RouteResult : Screen("route_result")
     object AllLines : Screen("all_lines")
     object AllStations : Screen("all_stations")
-
-    // --- 2. AÑADIR NUEVA RUTA ---
     object Settings : Screen("settings")
 
     object LineDetail : Screen("line_detail/{lineId}") {
@@ -43,14 +42,17 @@ sealed class Screen(val route: String) {
 
 /**
  * El "NavHost" principal de la aplicación.
- * ACTUALIZADO para conectar la pantalla de Ajustes.
+ * AHORA RECIBE el NavController desde MainActivity.
  */
 @Composable
-fun AppNavigation(viewModel: MainViewModel) {
-    val navController = rememberNavController()
+fun AppNavigation(
+    viewModel: MainViewModel,
+    navController: NavHostController // <-- 3. ACEPTAR NavController COMO PARÁMETRO
+) {
+    // val navController = rememberNavController() // <-- 4. ELIMINAR ESTA LÍNEA
 
     NavHost(
-        navController = navController,
+        navController = navController, // <-- 5. Usar el parámetro
         startDestination = Screen.Splash.route
     ) {
 
@@ -80,14 +82,15 @@ fun AppNavigation(viewModel: MainViewModel) {
                 onStationClicked = { stationId ->
                     navController.navigate(Screen.StationDetail.createRoute(stationId))
                 },
+                // --- 6. SIMPLIFICADO: Estos ya no los necesita el HomeScreen ---
                 onViewAllLines = {
-                    navController.navigate(Screen.AllLines.route)
+                    // Esta lógica ahora vive en la Bottom Nav Bar
                 },
                 onViewAllStations = {
-                    navController.navigate(Screen.AllStations.route)
+                    // Esta lógica ahora vive en la Bottom Nav Bar
                 },
-                // --- 3. CONECTAR EL BOTÓN DE AJUSTES ---
                 onNavigateToSettings = {
+                    // Esta lógica la podemos pasar al HomeSearchBar
                     navController.navigate(Screen.Settings.route)
                 }
             )

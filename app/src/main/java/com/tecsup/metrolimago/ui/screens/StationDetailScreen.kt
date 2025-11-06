@@ -1,33 +1,34 @@
-package com.tecsup.metrolimago.ui.screens
+package com.tecsup.metrolimago.ui.screens // Asegúrate que coincida con tu paquete
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.AccessTime
-import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Schedule
+// --- 1. IMPORTAR ÍCONOS DE ESTRELLA ---
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarBorder
+// --- FIN DE IMPORTS ---
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -36,12 +37,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -49,12 +48,14 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.tecsup.metrolimago.data.database.TransportLine
 import com.tecsup.metrolimago.viewmodel.MainViewModel
 
+// (Centro de Lima - Fallback)
+private val limaCenter = LatLng(-12.046374, -77.042793)
+
 /**
- * Pantalla de Detalle de Estación
- * ¡REDISEÑADA con mapa y panel de información!
+ * Pantalla que muestra el detalle de una estación (Req 2).
+ * ¡ACTUALIZADA CON BOTÓN DE FAVORITOS!
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,204 +65,144 @@ fun StationDetailScreen(
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val cameraPositionState = rememberCameraPositionState()
 
-    // 1. Encontramos la estación y la línea desde el ViewModel
+    // --- LÓGICA DE DATOS ---
+    // Buscamos la estación en 'allStations' para tener el estado 'isFavorite' más reciente
     val station = uiState.allStations.find { it.id == stationId }
     val line = uiState.allLines.find { it.id == station?.lineId }
 
-    // 2. Si la estación existe, centramos la cámara del mapa en ella
-    LaunchedEffect(station) {
-        station?.let {
-            cameraPositionState.position = CameraPosition.fromLatLngZoom(
-                LatLng(it.latitude, it.longitude), 15f // Zoom más cercano
+    // --- LÓGICA DE MAPA ---
+    val stationLocation = station?.let { LatLng(it.latitude, it.longitude) } ?: limaCenter
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(limaCenter, 12f)
+    }
+
+    LaunchedEffect(stationLocation) {
+        if (stationLocation != limaCenter) {
+            cameraPositionState.animate(
+                update = CameraUpdateFactory.newLatLngZoom(stationLocation, 16f),
+                durationMs = 1500
             )
         }
     }
 
-    // 3. Usamos Scaffold para la TopAppBar transparente
+    val mapUiSettings = MapUiSettings(
+        zoomControlsEnabled = false,
+        zoomGesturesEnabled = false,
+        scrollGesturesEnabled = false
+    )
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = {}, // Sin título
+                title = { Text(station?.name ?: "Cargando...") },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = line?.color ?: MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary // Color para la estrella
+                ),
                 navigationIcon = {
-                    IconButton(
-                        onClick = onNavigateBack,
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f))
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Regresar"
-                        )
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Transparent // AppBar transparente
-                )
-            )
-        }
-    ) { paddingValues ->
-
-        // 4. Usamos un Box para poner el panel encima del mapa
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues) // Padding de la AppBar
-        ) {
-            // --- EL MAPA (al fondo) ---
-            GoogleMap(
-                modifier = Modifier.fillMaxSize(),
-                cameraPositionState = cameraPositionState,
-                uiSettings = MapUiSettings(
-                    zoomControlsEnabled = false,
-                    myLocationButtonEnabled = true
-                )
-            ) {
-                // Marcador para la estación
-                station?.let {
-                    Marker(
-                        state = MarkerState(position = LatLng(it.latitude, it.longitude)),
-                        title = it.name
-                    )
-                }
-            }
-
-            // --- PANEL INFERIOR (encima) ---
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    // Ocupa la mitad inferior, pero puedes ajustarlo
-                    .fillMaxHeight(0.45f),
-                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                shadowElevation = 8.dp,
-                color = MaterialTheme.colorScheme.surface
-            ) {
-                // Verificamos que la estación y la línea no sean nulas
-                if (station != null && line != null) {
-                    StationInfoPanel(station = station, line = line)
-                } else {
-                    // Muestra un indicador de carga si los datos aún no están listos
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Cargando detalles...")
+                // --- 2. AÑADIR EL BOTÓN DE ACCIÓN (ESTRELLA) ---
+                actions = {
+                    // Solo mostramos el botón si la estación ha cargado
+                    if (station != null) {
+                        IconButton(onClick = {
+                            // ¡Llamamos al ViewModel!
+                            viewModel.toggleFavorite(station)
+                        }) {
+                            Icon(
+                                // Cambia el ícono si es favorito o no
+                                imageVector = if (station.isFavorite) {
+                                    Icons.Filled.Star
+                                } else {
+                                    Icons.Outlined.StarBorder
+                                },
+                                contentDescription = "Marcar como Favorito"
+                            )
+                        }
                     }
                 }
+            )
+        }
+    ) { innerPadding ->
+
+        if (uiState.isAppLoading || station == null || line == null) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+            ) {
+
+                // --- 1. Tarjeta del Mapa (REAL) ---
+                GoogleMap(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(250.dp),
+                    cameraPositionState = cameraPositionState,
+                    uiSettings = mapUiSettings
+                ) {
+                    Marker(
+                        state = MarkerState(position = stationLocation),
+                        title = station.name
+                    )
+                }
+
+                // --- 2. Tarjeta de Información (Contenido) ---
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Información", style = MaterialTheme.typography.titleLarge)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        elevation = CardDefaults.cardElevation(2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            InfoRow(icon = Icons.Default.Info, label = "Estado", value = station.status)
+                            InfoRow(icon = Icons.Default.Schedule, label = "Horario", value = station.schedule)
+                            InfoRow(icon = Icons.Default.Business, label = "Línea", value = line.name)
+                        }
+                    }
+                }
+
+                // (Aquí podrías agregar otra sección para "Servicios Cercanos" - Req 2)
             }
         }
     }
 }
 
 /**
- * NUEVO: El panel de información de la estación
+ * Un Composable helper para mostrar una fila de información (ícono, label, valor)
+ * (Sin cambios)
  */
 @Composable
-fun StationInfoPanel(
-    station: com.tecsup.metrolimago.data.database.Station,
-    line: TransportLine
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(24.dp) // Padding interno
+private fun InfoRow(icon: ImageVector, label: String, value: String) {
+    Row(
+        modifier = Modifier.padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        // --- Indicador de Línea (Línea 1) ---
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(line.color) // <-- ¡Color original de la línea!
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = line.name,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // --- Nombre de la Estación (Gamarra) ---
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.width(16.dp))
         Text(
-            text = station.name,
-            style = MaterialTheme.typography.headlineLarge,
+            text = "$label: ",
+            style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold
         )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // --- Tarjetas de Información (Estado y Horario) ---
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Tarjeta de Estado
-            InfoCard(
-                modifier = Modifier.weight(1f),
-                icon = Icons.Outlined.CheckCircle,
-                iconColor = Color(0xFF008D41), // Verde
-                title = "Estado",
-                value = station.status
-            )
-
-            // Tarjeta de Horario
-            InfoCard(
-                modifier = Modifier.weight(1f),
-                icon = Icons.Outlined.AccessTime,
-                iconColor = MaterialTheme.colorScheme.primary, // Azul
-                title = "Horario",
-                value = station.schedule
-            )
-        }
-    }
-}
-
-/**
- * NUEVO: Composable para las tarjetas de "Estado" y "Horario"
- */
-@Composable
-fun InfoCard(
-    modifier: Modifier = Modifier,
-    icon: ImageVector,
-    iconColor: Color,
-    title: String,
-    value: String
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        ),
-        elevation = CardDefaults.cardElevation(0.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                tint = iconColor,
-                modifier = Modifier.size(28.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
 }

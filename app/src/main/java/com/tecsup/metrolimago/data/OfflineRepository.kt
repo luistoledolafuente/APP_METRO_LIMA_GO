@@ -1,4 +1,4 @@
-package com.tecsup.metrolimago.data
+package com.tecsup.metrolimago.data // Asegúrate que coincida con tu paquete
 
 import com.tecsup.metrolimago.data.database.LineDao
 import com.tecsup.metrolimago.data.database.Station
@@ -12,8 +12,7 @@ import kotlinx.coroutines.flow.map
  * Repositorio que actúa como intermediario entre la Base de Datos (DAOs)
  * y el resto de la aplicación (el ViewModel).
  *
- * Oculta el origen de los datos (en este caso, Room).
- * Transforma los datos de 'Entidad' (DB) a 'Modelo' (UI).
+ * (¡ACTUALIZADO CON FUNCIONES DE FAVORITOS!)
  */
 class OfflineRepository(
     private val lineDao: LineDao,
@@ -52,6 +51,25 @@ class OfflineRepository(
         }
     }
 
+    // --- ¡NUEVA FUNCIÓN AÑADIDA! ---
+    /**
+     * Obtiene solo las estaciones favoritas como un Flow.
+     * Mapea el resultado de Entidad (DB) a Modelo (UI).
+     */
+    fun getFavoriteStations(): Flow<List<Station>> {
+        return stationDao.getFavoriteStations().map { entityList ->
+            entityList.map { it.toDomainModel() }
+        }
+    }
+
+    // --- ¡NUEVA FUNCIÓN AÑADIDA! ---
+    /**
+     * Llama al DAO para actualizar el estado de favorito.
+     */
+    suspend fun updateFavoriteStatus(stationId: String, isFavorite: Boolean) {
+        stationDao.updateFavoriteStatus(stationId, isFavorite)
+    }
+
 
     // --- Funciones para la Lógica (suspend fun, para obtener datos una sola vez) ---
 
@@ -87,4 +105,3 @@ class OfflineRepository(
         return lineDao.getLineById(lineId)?.toDomainModel()
     }
 }
-

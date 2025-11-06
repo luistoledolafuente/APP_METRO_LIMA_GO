@@ -1,23 +1,36 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
-    id("org.jetbrains.kotlin.kapt")
+import java.util.Properties
+import java.io.FileInputStream
 
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
+    id("org.jetbrains.kotlin.kapt")
 }
 
 android {
-    namespace = "com.tecsup.metrolimago"
+    namespace = "com.tecsup.metrolimago" // O 'com.tecsup.metrolimago'
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.tecsup.metrolimago"
+        applicationId = "com.tecsup.metrolimago" // O 'com.tecsup.metrolimago'
         minSdk = 24
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // --- CÓDIGO PARA LA CLAVE DE API ---
+        // Ahora 'Properties' y 'FileInputStream' serán reconocidos
+        val properties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            properties.load(FileInputStream(localPropertiesFile))
+        }
+        val mapsApiKey = properties.getProperty("MAPS_API_KEY", "")
+
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+        // --- FIN CÓDIGO API ---
     }
 
     buildTypes {
@@ -39,54 +52,57 @@ android {
     buildFeatures {
         compose = true
     }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.11" // Compatible con Kotlin 1.9.23
+    }
 }
 
 dependencies {
-    implementation(libs.androidx.compose.foundation.layout)
-    implementation(libs.androidx.material3)
-    // --- Definimos nuestras versiones aquí ---
+    // Versiones (puedes ajustarlas)
     val roomVersion = "2.6.1"
-    val navVersion = "2.7.7"
     val lifecycleVersion = "2.8.3"
+    val navigationVersion = "2.7.7"
+    val composeBomVersion = "2024.06.00"
 
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.androidx.compose.ui.tooling)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.activity:activity-compose:1.9.0")
 
-    // --- DEPENDENCIAS CLAVE PARA NUESTRO PROYECTO ---
+    // Esta librería provee los temas XML base de Material 3 (ej. Theme.Material3.DayNight)
+    implementation("com.google.android.material:material:1.12.0")
 
-    // 1. ViewModel (Para conectar UI y Lógica)
+    // Compose BOM (Bill of Materials)
+    implementation(platform("androidx.compose:compose-bom:$composeBomVersion"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material-icons-extended") // Para todos los íconos
+
+    // ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleVersion")
 
-    // 2. Navigation (Para movernos entre pantallas)
-    implementation("androidx.navigation:navigation-compose:$navVersion")
+    // Navigation
+    implementation("androidx.navigation:navigation-compose:$navigationVersion")
 
-    // 3. Room (Base de Datos)
+    // Room (Base de Datos)
     implementation("androidx.room:room-runtime:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion") // Para coroutines
-    kapt("androidx.room:room-compiler:$roomVersion") // "kapt" es el procesador de anotaciones
+    implementation("androidx.room:room-ktx:$roomVersion")
+    kapt("androidx.room:room-compiler:$roomVersion")
 
-    implementation("androidx.compose.material:material-icons-extended")
-
-    // --- NUEVAS DEPENDENCIAS PARA GOOGLE MAPS ---
-    // El SDK de Google Maps para Compose
+    // Google Maps
     implementation("com.google.maps.android:maps-compose:4.3.3")
-    // El SDK de Google Play Services (necesario para el mapa)
+    implementation("com.google.maps.android:maps-compose-utils:4.3.3") // Para Polylines
     implementation("com.google.android.gms:play-services-maps:18.2.0")
-    // Para pedir y gestionar permisos de localización
+
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
-    // Para utilidades del mapa, como dibujar Polylines
-    implementation("com.google.maps.android:maps-compose-utils:4.3.3")
+
+    // (Test, etc.)
+    testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    androidTestImplementation(platform("androidx.compose:compose-bom:$composeBomVersion"))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
+

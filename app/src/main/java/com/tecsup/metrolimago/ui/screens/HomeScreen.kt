@@ -1,4 +1,4 @@
-package com.tecsup.metrolimago.ui.screens
+package com.tecsup.metrolimago.ui.screens // Asegúrate que coincida con tu paquete
 
 import android.Manifest
 import android.content.Intent
@@ -50,18 +50,19 @@ private val mapUiSettings = MapUiSettings(
 
 /**
  * --- ¡ACTUALIZADO! ---
- * Añadimos el nuevo parámetro onNavigateToSettings
+ * SIMPLIFICADO para funcionar con la Bottom Nav Bar.
  */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun HomeScreen(
     viewModel: MainViewModel,
     onNavigateToPlanner: () -> Unit,
-    onLineClicked: (String) -> Unit,
+    onLineClicked: (String) -> Unit, // Lo mantenemos por si hacemos click en el Polyline
     onStationClicked: (String) -> Unit,
+    onNavigateToSettings: () -> Unit,
+    // --- PARÁMETROS ELIMINADOS (ya no los necesitamos) ---
     onViewAllLines: () -> Unit,
-    onViewAllStations: () -> Unit,
-    onNavigateToSettings: () -> Unit // <-- PARÁMETRO AÑADIDO
+    onViewAllStations: () -> Unit
 ) {
     val permissionState = rememberMultiplePermissionsState(
         permissions = listOf(
@@ -70,6 +71,7 @@ fun HomeScreen(
         )
     )
 
+    // Arreglo: Usamos launchMultiplePermissionRequest
     LaunchedEffect(Unit) {
         permissionState.launchMultiplePermissionRequest()
     }
@@ -78,11 +80,8 @@ fun HomeScreen(
         HomeScreenContent(
             viewModel = viewModel,
             onNavigateToPlanner = onNavigateToPlanner,
-            onLineClicked = onLineClicked,
             onStationClicked = onStationClicked,
-            onViewAllLines = onViewAllLines,
-            onViewAllStations = onViewAllStations,
-            onNavigateToSettings = onNavigateToSettings // <-- PASAMOS EL PARÁMETRO
+            onNavigateToSettings = onNavigateToSettings
         )
     } else {
         PermissionDeniedScreen(
@@ -93,81 +92,72 @@ fun HomeScreen(
 
 /**
  * --- ¡ACTUALIZADO! ---
- * Añadimos el parámetro para pasarlo al HomeSearchBar
+ * Ya no necesita el HomeBottomPanel
  */
 @Composable
 fun HomeScreenContent(
     viewModel: MainViewModel,
     onNavigateToPlanner: () -> Unit,
-    onLineClicked: (String) -> Unit,
     onStationClicked: (String) -> Unit,
-    onViewAllLines: () -> Unit,
-    onViewAllStations: () -> Unit,
-    onNavigateToSettings: () -> Unit // <-- PARÁMETRO AÑADIDO
+    onNavigateToSettings: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(limaCenter, 11f)
     }
 
-    Scaffold { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+    // El Scaffold se movió a MainActivity, aquí solo usamos un Box
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+
+        GoogleMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPositionState = cameraPositionState,
+            properties = MapProperties(isMyLocationEnabled = true),
+            uiSettings = mapUiSettings
         ) {
-
-            GoogleMap(
-                modifier = Modifier.fillMaxSize(),
-                cameraPositionState = cameraPositionState,
-                properties = MapProperties(isMyLocationEnabled = true),
-                uiSettings = mapUiSettings
-            ) {
-                uiState.allStations.forEach { station ->
-                    Marker(
-                        state = MarkerState(position = LatLng(station.latitude, station.longitude)),
-                        title = station.name,
-                        snippet = "Línea: ${station.lineId}"
-                    )
-                }
+            uiState.allStations.forEach { station ->
+                // NOTA: Hacemos los marcadores clickables
+                Marker(
+                    state = MarkerState(position = LatLng(station.latitude, station.longitude)),
+                    title = station.name,
+                    snippet = "Clic para ver detalle",
+                    onInfoWindowClick = {
+                        // Al hacer clic en el popup del marcador, navegamos
+                        onStationClicked(station.id)
+                    }
+                )
             }
-
-            // --- 2. EL BUSCADOR (Arriba) ---
-            HomeSearchBar(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                onClicked = onNavigateToPlanner,
-                onSettingsClicked = onNavigateToSettings // <-- CONECTADO
-            )
-
-            // --- 3. EL PANEL INFERIOR (Abajo) ---
-            HomeBottomPanel(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth(),
-                lines = uiState.allLines,
-                popularStations = uiState.allStations.take(2),
-                onLineClicked = onLineClicked,
-                onStationClicked = onStationClicked,
-                onViewAllLines = onViewAllLines,
-                onViewAllStations = onViewAllStations
-            )
         }
+
+        // --- 2. EL BUSCADOR (Arriba) ---
+        // (Usamos el buscador de tu compañero)
+        HomeSearchBar(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .padding(16.dp),
+            onClicked = onNavigateToPlanner,
+            onSettingsClicked = onNavigateToSettings
+        )
+
+        // --- 3. EL PANEL INFERIOR (HomeBottomPanel) FUE ELIMINADO ---
+        // Sus funciones (Ver Líneas, Ver Estaciones)
+        // ahora están en la Bottom Navigation Bar.
     }
 }
 
+
 /**
- * --- ¡ACTUALIZADO! ---
- * Añadimos onSettingsClicked y el IconButton de Perfil
+ * (El HomeSearchBar de tu compañero se queda igual)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeSearchBar(
     modifier: Modifier = Modifier,
     onClicked: () -> Unit,
-    onSettingsClicked: () -> Unit // <-- PARÁMETRO AÑADIDO
+    onSettingsClicked: () -> Unit
 ) {
     Card(
         onClick = onClicked,
@@ -204,7 +194,6 @@ fun HomeSearchBar(
             }
             Spacer(modifier = Modifier.width(8.dp))
 
-            // --- ¡BOTÓN DE AJUSTES AÑADIDO! ---
             IconButton(
                 onClick = onSettingsClicked,
                 modifier = Modifier.size(32.dp)
@@ -220,206 +209,9 @@ fun HomeSearchBar(
     }
 }
 
-// --- El resto de los composables (HomeBottomPanel, SectionHeader, LineaCard,
-//      EstacionCard, PermissionDeniedScreen) permanecen EXACTAMENTE IGUAL ---
-// ... (puedes dejar los que ya tenías)
-
-@Composable
-fun HomeBottomPanel(
-    modifier: Modifier = Modifier,
-    lines: List<TransportLine>,
-    popularStations: List<Station>,
-    onLineClicked: (String) -> Unit,
-    onStationClicked: (String) -> Unit,
-    onViewAllLines: () -> Unit,
-    onViewAllStations: () -> Unit
-) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-        shadowElevation = 8.dp,
-        color = MaterialTheme.colorScheme.surface
-    ) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .padding(vertical = 8.dp)
-                        .width(40.dp)
-                        .height(4.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
-                )
-            }
-            item {
-                SectionHeader(
-                    title = "Líneas",
-                    onViewAllClicked = onViewAllLines
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(lines) { line ->
-                        LineaCard(
-                            line = line,
-                            onClicked = { onLineClicked(line.id) }
-                        )
-                    }
-                }
-            }
-            item {
-                Divider(
-                    modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                )
-            }
-            item {
-                SectionHeader(
-                    title = "Estaciones",
-                    onViewAllClicked = onViewAllStations
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Column(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    popularStations.forEach { station ->
-                        EstacionCard(
-                            station = station,
-                            onClicked = { onStationClicked(station.id) }
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun SectionHeader(
-    title: String,
-    onViewAllClicked: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = "Ver todo",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.clickable(onClick = onViewAllClicked)
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun LineaCard(
-    line: TransportLine,
-    onClicked: () -> Unit
-) {
-    Card(
-        onClick = onClicked,
-        modifier = Modifier
-            .width(180.dp)
-            .height(100.dp),
-        elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(12.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Train,
-                contentDescription = "Línea",
-                modifier = Modifier
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .background(line.color)
-                    .padding(4.dp),
-                tint = Color.White
-            )
-            Text(
-                text = line.name,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun EstacionCard(
-    station: Station,
-    onClicked: () -> Unit
-) {
-    Card(
-        onClick = onClicked,
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.LocationOn,
-                contentDescription = "Estación",
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                    .padding(8.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = station.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Línea ${station.lineId}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Icon(
-                imageVector = Icons.Outlined.ArrowForward,
-                contentDescription = "Ver detalle",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-
+/**
+ * (PermissionDeniedScreen de tu compañero se queda igual)
+ */
 @Composable
 fun PermissionDeniedScreen(
     onGrantPermission: () -> Unit
@@ -458,3 +250,4 @@ fun PermissionDeniedScreen(
         }
     }
 }
+

@@ -1,17 +1,13 @@
-package com.tecsup.metrolimago.ui.screens // <-- ¡¡ESTA LÍNEA ES LA MÁS IMPORTANTE!!
+package com.tecsup.metrolimago.ui.screens // Asegúrate que coincida con tu paquete
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Train
+import androidx.compose.material.icons.filled.Tram
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -23,29 +19,23 @@ import kotlinx.coroutines.delay
 fun SplashScreen(
     onTimeout: () -> Unit
 ) {
+    // Este efecto se ejecuta una sola vez
     LaunchedEffect(Unit) {
-        delay(2000L)
-        onTimeout()
+        delay(2000) // Espera 2 segundos
+        onTimeout() // Llama a la navegación
     }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface),
+            .background(MaterialTheme.colorScheme.primary),
         contentAlignment = Alignment.Center
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                imageVector = Icons.Outlined.Train,
-                contentDescription = "Logo",
-                modifier = Modifier.size(100.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "MetroLima GO",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
+        Icon(
+            imageVector = Icons.Default.Tram,
+            contentDescription = "Logo de MetroLimaGo",
+            modifier = Modifier.size(100.dp),
+            tint = MaterialTheme.colorScheme.onPrimary
+        )
     }
 }

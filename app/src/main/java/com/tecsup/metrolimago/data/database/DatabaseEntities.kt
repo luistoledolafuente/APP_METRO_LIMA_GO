@@ -1,4 +1,4 @@
-package com.tecsup.metrolimago.data.database
+package com.tecsup.metrolimago.data.database // Asegúrate que coincida con tu paquete
 
 import androidx.compose.ui.graphics.Color
 import androidx.room.Entity
@@ -11,25 +11,26 @@ import com.tecsup.metrolimago.ui.theme.Linea1Color
 data class TransportLineEntity(
     @PrimaryKey val id: String,
     val name: String,
-    val colorHex: String, // Guardamos el color como texto (ej: "#D32F2F")
+    val colorHex: String,
     val status: String = "Operativo"
 )
 
 @Entity(tableName = "stations")
 data class StationEntity(
     @PrimaryKey val id: String,
-    val lineId: String, // Clave foránea para TransportLineEntity
+    val lineId: String,
     val name: String,
-    val order: Int, // Posición en la línea (0, 1, 2...)
+    val order: Int,
     val schedule: String = "05:00 - 22:00",
     val status: String = "OPERATIVE",
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
+    // --- ¡CAMBIO AÑADIDO! ---
+    // Por defecto, ninguna estación es favorita.
+    val isFavorite: Boolean = false
 )
 
-
 // --- 2. MODELOS DE DOMINIO (Los que usa la UI) ---
-// Estos son los objetos que nuestras pantallas usarán.
 
 data class TransportLine(
     val id: String,
@@ -46,17 +47,17 @@ data class Station(
     val schedule: String,
     val status: String,
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
+    // --- ¡CAMBIO AÑADIDO! ---
+    val isFavorite: Boolean
 )
 
 // --- 3. FUNCIONES DE MAPEO ---
-// Convierten los datos de la DB (Entity) a los datos de la UI (Model)
 
 fun TransportLineEntity.toDomainModel(): TransportLine {
     return TransportLine(
         id = this.id,
         name = this.name,
-        // Convertimos el String Hex a un objeto Color
         color = Color(android.graphics.Color.parseColor(this.colorHex)),
         status = this.status
     )
@@ -71,7 +72,8 @@ fun StationEntity.toDomainModel(): Station {
         schedule = this.schedule,
         status = this.status,
         latitude = this.latitude,
-        longitude = this.longitude
+        longitude = this.longitude,
+        // --- ¡CAMBIO AÑADIDO! ---
+        isFavorite = this.isFavorite
     )
 }
-
