@@ -1,3 +1,23 @@
 <resources>
-    <string name="app_name">MetroLimaGo</string>
+    <string name="app_name">Metro Lima Go</string>
+    <string name="informacion_adicional">Información Adicional</string>
+    <string name="a_donde_vas">¿A Dónde Vas?</string>
+    <string name="rutas_favoritas">Rutas Favoritas</string>
+    <string name="no_tienes_rutas">No tienes rutas favoritas aún.</string>
+    <string name="lineas_disponibles">Líneas Disponibles</string>
+    <string name="guardar_ruta">Guardar como ruta favorita</string>
+    <string name="tiempo_estimado">Tiempo estimado: %1$d min</string>
+    <string name="origen">Origen</string>
+    <string name="destino">Destino</string>
+    <string name="llegaste_a">Llegaste a %1$s</string>
+    <string name="permiso_ubicacion_req">Permiso de Ubicación Requerido</string>
+    <string name="explicacion_ubicacion">Para mostrar el mapa y tu ubicación, necesitamos que nos des permiso.</string>
+    <string name="conceder_permiso">Conceder Permiso</string>
+    <string name="abrir_configuracion">Abrir Configuración</string>
+    <string name="busqueda">¿A dónde quieres ir?</string>
+    <string name="transbordo_en">Transbordo en %1$s</string>
+    <string name="inicia_en">Inicia en %1$s</string>
+    <string name="toma_linea">Toma la %1$s</string>
+    <string name="sube_en">Sube en %1$s</string>
+    <string name="cargando_ruta">Cargando ruta...</string>
 </resources>

@@ -6,37 +6,15 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,23 +26,16 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.*
+import com.tecsup.metrolimago.data.database.FavoriteRouteEntity
 import com.tecsup.metrolimago.data.database.TransportLine
 import com.tecsup.metrolimago.viewmodel.MainViewModel
+import androidx.navigation.NavController
 
-// Coordenadas de Lima, para centrar el mapa
 private val limaCenter = LatLng(-12.046374, -77.042793)
-
-// --- 1. MEJORA DE UI/UX ---
-// Habilitamos el botón de "Mi Ubicación" que provee Google Maps
 private val mapUiSettings = MapUiSettings(
     zoomControlsEnabled = false,
-    myLocationButtonEnabled = true // <-- ¡AQUÍ ESTÁ EL CAMBIO!
+    myLocationButtonEnabled = true
 )
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -72,7 +43,8 @@ private val mapUiSettings = MapUiSettings(
 fun HomeScreen(
     viewModel: MainViewModel,
     onNavigateToPlanner: () -> Unit,
-    onLineClicked: (String) -> Unit
+    onLineClicked: (String) -> Unit,
+    navController: NavController
 ) {
     val permissionState = rememberMultiplePermissionsState(
         permissions = listOf(
@@ -89,7 +61,8 @@ fun HomeScreen(
         HomeScreenContent(
             viewModel = viewModel,
             onNavigateToPlanner = onNavigateToPlanner,
-            onLineClicked = onLineClicked
+            onLineClicked = onLineClicked,
+            navController = navController
         )
     } else {
         PermissionDeniedScreen(
@@ -98,14 +71,12 @@ fun HomeScreen(
     }
 }
 
-/**
- * El contenido real de la pantalla (el mapa)
- */
 @Composable
 fun HomeScreenContent(
     viewModel: MainViewModel,
     onNavigateToPlanner: () -> Unit,
-    onLineClicked: (String) -> Unit
+    onLineClicked: (String) -> Unit,
+    navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val cameraPositionState = rememberCameraPositionState {
@@ -119,12 +90,11 @@ fun HomeScreenContent(
                 .padding(paddingValues)
         ) {
 
-            // --- 1. EL MAPA (Al fondo) ---
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
                 properties = MapProperties(isMyLocationEnabled = true),
-                uiSettings = mapUiSettings // <-- Aplicamos la UI con el botón
+                uiSettings = mapUiSettings
             ) {
                 uiState.allStations.forEach { station ->
                     Marker(
@@ -135,7 +105,6 @@ fun HomeScreenContent(
                 }
             }
 
-            // --- 2. EL BUSCADOR (Arriba) ---
             SearchBarUI(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
@@ -144,22 +113,20 @@ fun HomeScreenContent(
                 onClicked = onNavigateToPlanner
             )
 
-            // --- 3. EL PANEL INFERIOR (Abajo) ---
             BottomPanel(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth(),
                 lines = uiState.allLines,
                 onLineClicked = onLineClicked,
-                onNavigateToPlanner = onNavigateToPlanner // Le pasamos el navegador
+                onNavigateToPlanner = onNavigateToPlanner,
+                navController = navController,
+                viewModel = viewModel
             )
         }
     }
 }
 
-/**
- * Un "falso" buscador que flota arriba del mapa.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchBarUI(
@@ -194,18 +161,17 @@ fun SearchBarUI(
     }
 }
 
-/**
- * --- 2. MEJORA DE UI/UX ---
- * El panel inferior ahora es una columna que contiene
- * el botón "A Dónde Vas" y la lista de líneas.
- */
 @Composable
 fun BottomPanel(
     modifier: Modifier = Modifier,
     lines: List<TransportLine>,
     onLineClicked: (String) -> Unit,
-    onNavigateToPlanner: () -> Unit // Nueva acción
+    onNavigateToPlanner: () -> Unit,
+    navController: NavController,
+    viewModel: MainViewModel
 ) {
+    val favoriteRoutes by viewModel.favoriteRoutes.collectAsState()
+
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
@@ -217,8 +183,19 @@ fun BottomPanel(
                 .background(MaterialTheme.colorScheme.surface)
                 .padding(vertical = 16.dp)
         ) {
+            Button(
+                onClick = { navController.navigate("informacion") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .height(50.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Información Adicional", style = MaterialTheme.typography.bodyLarge)
+            }
 
-            // --- NUEVO BOTÓN "A DÓNDE VAS" ---
+            Spacer(modifier = Modifier.height(8.dp))
+
             Button(
                 onClick = onNavigateToPlanner,
                 modifier = Modifier
@@ -229,9 +206,43 @@ fun BottomPanel(
             ) {
                 Text("¿A Dónde Vas?", style = MaterialTheme.typography.bodyLarge)
             }
-            // --- FIN DEL NUEVO BOTÓN ---
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Rutas Favoritas",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 16.dp, top = 8.dp)
+            )
+
+            if (favoriteRoutes.isEmpty()) {
+                Text("No tienes rutas favoritas aún.", modifier = Modifier.padding(start = 16.dp, top = 4.dp))
+            } else {
+                favoriteRoutes.forEach { route ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .clickable {
+                                val allStations = viewModel.uiState.value.allStations
+                                viewModel.onOriginStationSelected(
+                                    allStations.first { it.name == route.origin }
+                                )
+                                viewModel.onDestinationStationSelected(
+                                    allStations.first { it.name == route.destination }
+                                )
+                                viewModel.calculateRoute()
+                                navController.navigate("route_result")
+                            }
+                    ) {
+                        Text("${route.origin} → ${route.destination}")
+                        Spacer(Modifier.weight(1f))
+                        // Aquí podrías poner un botón para eliminar el favorito si quieres
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = "Líneas Disponibles",
@@ -241,7 +252,6 @@ fun BottomPanel(
             )
             Spacer(modifier = Modifier.height(12.dp))
 
-            // --- Scroll Horizontal de Líneas ---
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -257,10 +267,6 @@ fun BottomPanel(
     }
 }
 
-/**
- * Un "Chip" o tarjeta pequeña que representa una línea.
- * (Sin cambios)
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LineChip(
@@ -292,10 +298,6 @@ fun LineChip(
     }
 }
 
-/**
- * Pantalla que se muestra si el usuario denegó el permiso de GPS.
- * (Sin cambios)
- */
 @Composable
 fun PermissionDeniedScreen(
     onGrantPermission: () -> Unit
@@ -314,7 +316,6 @@ fun PermissionDeniedScreen(
             style = MaterialTheme.typography.titleLarge,
             textAlign = TextAlign.Center
         )
-        // ... (resto del contenido sin cambios)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             "Para mostrar el mapa y tu ubicación, necesitamos que nos des permiso.",

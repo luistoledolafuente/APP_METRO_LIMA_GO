@@ -11,16 +11,14 @@ import com.tecsup.metrolimago.ui.screens.LineDetailScreen
 import com.tecsup.metrolimago.ui.screens.RoutePlannerScreen
 import com.tecsup.metrolimago.ui.screens.RouteResultScreen
 import com.tecsup.metrolimago.ui.screens.StationDetailScreen
+import com.tecsup.metrolimago.ui.screens.InformacionScreen // <--- AGREGA ESTA IMPORTACIÓN
 import com.tecsup.metrolimago.viewmodel.MainViewModel
 
-/**
- * Define las rutas de navegación de forma segura (type-safe).
- * (Sin cambios)
- */
 sealed class Screen(val route: String) {
     object Home : Screen("home")
     object RoutePlanner : Screen("route_planner")
     object RouteResult : Screen("route_result")
+    object Informacion : Screen("informacion") // <--- AGREGA ESTA
 
     object LineDetail : Screen("line_detail/{lineId}") {
         fun createRoute(lineId: String) = "line_detail/$lineId"
@@ -31,10 +29,6 @@ sealed class Screen(val route: String) {
     }
 }
 
-/**
- * El "NavHost" principal de la aplicación.
- * ACTUALIZADO para limpiar el estado del ViewModel.
- */
 @Composable
 fun AppNavigation(viewModel: MainViewModel) {
     val navController = rememberNavController()
@@ -53,10 +47,15 @@ fun AppNavigation(viewModel: MainViewModel) {
                     navController.navigate(Screen.RoutePlanner.route)
                 },
                 onLineClicked = { lineId ->
-                    // No necesitamos limpiar nada aquí, solo navegar
                     navController.navigate(Screen.LineDetail.createRoute(lineId))
-                }
+                },
+                navController = navController // <--- PASA NAVCONTROLLER!
             )
+        }
+
+        // --- Pantalla de Información Adicional ---
+        composable(Screen.Informacion.route) {
+            InformacionScreen()
         }
 
         // --- Pantalla de Detalle de Línea ---
@@ -70,8 +69,6 @@ fun AppNavigation(viewModel: MainViewModel) {
                     viewModel = viewModel,
                     lineId = lineId,
                     onNavigateBack = {
-                        // --- ¡AQUÍ ESTÁ EL ARREGLO! ---
-                        // Limpiamos la lista de estaciones al salir
                         viewModel.clearSelectedLine()
                         navController.popBackStack()
                     },
@@ -104,7 +101,6 @@ fun AppNavigation(viewModel: MainViewModel) {
                 viewModel = viewModel,
                 onNavigateBack = {
                     viewModel.clearRouteSearch()
-                    // Regresamos hasta la pantalla de Home
                     navController.popBackStack(Screen.Home.route, inclusive = false)
                 }
             )

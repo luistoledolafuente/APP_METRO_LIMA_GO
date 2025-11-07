@@ -1,35 +1,16 @@
 package com.tecsup.metrolimago.ui.screens
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lens
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -51,14 +32,8 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.tecsup.metrolimago.data.database.Station
 import com.tecsup.metrolimago.viewmodel.MainViewModel
 
-// Coordenadas de Lima, para centrar el mapa
 private val limaCenter = LatLng(-12.046374, -77.042793)
-
-// Configuración de UI del Mapa
-private val lineMapUiSettings = MapUiSettings(
-    zoomControlsEnabled = true,
-    myLocationButtonEnabled = false
-)
+private val lineMapUiSettings = MapUiSettings(zoomControlsEnabled = true, myLocationButtonEnabled = false)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,23 +45,15 @@ fun LineDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val line = uiState.allLines.find { it.id == lineId }
-
     val stations = uiState.selectedLineStations
+    val cameraPositionState = rememberCameraPositionState { position = CameraPosition.fromLatLngZoom(limaCenter, 11f) }
+    val favorites by viewModel.favoriteStations.collectAsState()
 
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(limaCenter, 11f)
-    }
-
-    LaunchedEffect(lineId) {
-        viewModel.loadStationsForLine(lineId)
-    }
-
+    LaunchedEffect(lineId) { viewModel.loadStationsForLine(lineId) }
     LaunchedEffect(stations) {
         if (stations.isNotEmpty()) {
             val boundsBuilder = LatLngBounds.Builder()
-            stations.forEach { station ->
-                boundsBuilder.include(LatLng(station.latitude, station.longitude))
-            }
+            stations.forEach { station -> boundsBuilder.include(LatLng(station.latitude, station.longitude)) }
             val bounds = boundsBuilder.build()
             cameraPositionState.animate(
                 update = CameraUpdateFactory.newLatLngBounds(bounds, 100),
@@ -112,7 +79,6 @@ fun LineDetailScreen(
             )
         }
     ) { innerPadding ->
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -140,7 +106,9 @@ fun LineDetailScreen(
                 shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
                 shadowElevation = 8.dp
             ) {
-                Column(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier.fillMaxSize()
+                ) {
                     Text(
                         text = "Estaciones",
                         style = MaterialTheme.typography.titleMedium,
@@ -161,7 +129,15 @@ fun LineDetailScreen(
                             items(stations) { station ->
                                 StationListItem(
                                     station = station,
-                                    onClicked = { onStationClicked(station.id) }
+                                    onClicked = { onStationClicked(station.id) },
+                                    isFavorite = favorites.contains(station.id),
+                                    onToggleFavorite = {
+                                        if (favorites.contains(station.id)) {
+                                            viewModel.deleteFavorite(station.id)
+                                        } else {
+                                            viewModel.addFavorite(station.id)
+                                        }
+                                    }
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                             }
@@ -176,7 +152,9 @@ fun LineDetailScreen(
 @Composable
 fun StationListItem(
     station: Station,
-    onClicked: () -> Unit
+    onClicked: () -> Unit,
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -186,8 +164,6 @@ fun StationListItem(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
-            // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
-            // Quité ".posix" de esta línea
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
@@ -205,6 +181,13 @@ fun StationListItem(
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold
             )
+            Spacer(modifier = Modifier.weight(1f))
+            IconButton(onClick = onToggleFavorite) {
+                Icon(
+                    imageVector = if (isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
+                    contentDescription = "Favorito"
+                )
+            }
         }
     }
 }

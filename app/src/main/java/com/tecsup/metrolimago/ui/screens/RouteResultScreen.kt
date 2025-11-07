@@ -1,19 +1,6 @@
 package com.tecsup.metrolimago.ui.screens
 
-// --- INICIO DE TODOS LOS IMPORTS NECESARIOS ---
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,18 +10,7 @@ import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.PersonPin
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -49,26 +25,17 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
-import com.google.maps.android.compose.GoogleMap
-// ¡Este es el import que faltaba!
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.Polyline
-import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.*
 import com.tecsup.metrolimago.data.database.Station
 import com.tecsup.metrolimago.logic.RouteResult
 import com.tecsup.metrolimago.logic.RouteSegment
 import com.tecsup.metrolimago.viewmodel.MainViewModel
-// --- FIN DE LOS IMPORTS ---
 
 private val limaCenter = LatLng(-12.046374, -77.042793)
 private val mapUiSettings = MapUiSettings(
     zoomControlsEnabled = true,
     myLocationButtonEnabled = true
 )
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,22 +84,18 @@ fun RouteResultScreen(
             )
         }
     ) { innerPadding ->
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
                 uiSettings = mapUiSettings,
-                // ¡El error estaba aquí! Faltaba el import de MapProperties
                 properties = MapProperties(isMyLocationEnabled = true)
             ) {
                 if (route != null && origin != null && destination != null) {
-
                     Marker(
                         state = MarkerState(position = LatLng(origin.latitude, origin.longitude)),
                         title = "Origen: ${origin.name}",
@@ -189,6 +152,17 @@ fun RouteResultScreen(
                                 destination = destination
                             )
                         }
+                        item {
+                            // BOTÓN PARA GUARDAR COMO FAVORITA
+                            Button(
+                                onClick = { viewModel.addFavoriteRoute(origin.name, destination.name) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 12.dp)
+                            ) {
+                                Text("Guardar como ruta favorita")
+                            }
+                        }
 
                         route.segments.forEachIndexed { index, segment ->
                             item { SegmentHeader(segment, index == 0) }
@@ -214,7 +188,7 @@ fun RouteResultScreen(
     }
 }
 
-// --- TODOS LOS COMPOSABLES HELPER (Con 1 corrección) ---
+// --- TODOS LOS COMPOSABLES HELPER (Sin cambios) ---
 
 @Composable
 fun RouteSummaryCard(route: RouteResult, origin: Station, destination: Station) {

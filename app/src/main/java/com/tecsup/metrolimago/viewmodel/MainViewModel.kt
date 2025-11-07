@@ -9,6 +9,8 @@ import com.tecsup.metrolimago.data.OfflineRepository
 import com.tecsup.metrolimago.data.database.AppDatabase
 import com.tecsup.metrolimago.data.database.Station
 import com.tecsup.metrolimago.data.database.TransportLine
+import com.tecsup.metrolimago.data.database.FavoriteStationEntity
+import com.tecsup.metrolimago.data.database.FavoriteRouteEntity // <--- AGREGA ESTA
 import com.tecsup.metrolimago.logic.RouteFinder
 import com.tecsup.metrolimago.logic.RouteResult
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,95 +22,66 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * Estado de la UI (User Interface).
- * Contiene todos los datos que las pantallas necesitan para dibujarse.
- */
 data class AppUiState(
-    // Listas principales (cargadas al inicio)
     val allLines: List<TransportLine> = emptyList(),
     val allStations: List<Station> = emptyList(),
-
-    // Estado para el Detalle de Línea
     val selectedLineStations: List<Station> = emptyList(),
     val isLineDetailLoading: Boolean = false,
-
-    // Estado para el Planificador de Ruta
     val selectedOrigin: Station? = null,
     val selectedDestination: Station? = null,
     val calculatedRoute: RouteResult? = null,
     val routeErrorMessage: String? = null,
-
-    // Estado de Carga General
-    val isAppLoading: Boolean = true // Empezamos en 'cargando'
+    val isAppLoading: Boolean = true
 )
 
-/**
- * ViewModel principal de la aplicación.
- * CORREGIDO para evitar bucles de recarga (flickering).
- */
 class MainViewModel(application: Application) : AndroidViewModel(application) {
-
-    // --- 1. INICIALIZACIÓN ---
-    private val repository: OfflineRepository
-    private val routeFinder: RouteFinder
+    private val database = AppDatabase.getDatabase(application)
+    private val repository: OfflineRepository = OfflineRepository(database.lineDao(), database.stationDao())
+    private val routeFinder: RouteFinder = RouteFinder(repository)
+    private val favoriteStationDao = database.favoriteStationDao()
+    private val favoriteRouteDao = database.favoriteRouteDao() // <--- AGREGADO
 
     private val _uiState = MutableStateFlow(AppUiState())
     val uiState: StateFlow<AppUiState> = _uiState.asStateFlow()
 
+    // FAVORITOS - estaciones
+    private val _favoriteStations = MutableStateFlow<List<String>>(emptyList())
+    val favoriteStations: StateFlow<List<String>> = _favoriteStations
+
+    // FAVORITOS - rutas
+    private val _favoriteRoutes = MutableStateFlow<List<FavoriteRouteEntity>>(emptyList())
+    val favoriteRoutes: StateFlow<List<FavoriteRouteEntity>> = _favoriteRoutes
+
     init {
-        // Obtenemos la instancia de la base de datos
-        val database = AppDatabase.getDatabase(application)
-
-        repository = OfflineRepository(database.lineDao(), database.stationDao())
-        routeFinder = RouteFinder(repository)
-
-        // Cargamos los datos iniciales (las listas de líneas y estaciones)
         loadInitialAppData()
+        loadFavorites()
+        loadFavoriteRoutes()
     }
 
     // --- 2. CARGA DE DATOS ---
-
-    /**
-     * Carga las listas de líneas y estaciones (datos globales)
-     * una sola vez cuando se inicia el ViewModel.
-     */
     private fun loadInitialAppData() {
         viewModelScope.launch {
-            // 'combine' nos permite "escuchar" a varios Flujos (Flows) a la vez
             combine(
                 repository.getAllLines(),
                 repository.getAllStations()
             ) { lines, stations ->
-                // Creamos un estado temporal solo con estos datos
                 Pair(lines, stations)
             }.collect { (lines, stations) ->
-                // Actualizamos el estado de la UI con los nuevos datos
                 _uiState.update { currentState ->
                     currentState.copy(
                         allLines = lines,
                         allStations = stations,
-                        isAppLoading = false // ¡Ya cargamos!
+                        isAppLoading = false
                     )
                 }
             }
         }
     }
 
-    /**
-     * ¡NUEVA FUNCIÓN!
-     * Carga las estaciones para una línea específica.
-     * Esto ahora se llama DESDE la pantalla (LineDetailScreen).
-     */
     fun loadStationsForLine(lineId: String) {
-        // 1. Ponemos el estado en "Cargando"
         _uiState.update { it.copy(isLineDetailLoading = true) }
-
         viewModelScope.launch {
-            // 2. Usamos el Flow, pero solo tomamos el *primer* valor (la lista actual)
             val stations = repository.getStationsByLine(lineId).stateIn(viewModelScope).value
-
-            // 3. Actualizamos el estado con la lista y quitamos "Cargando"
             _uiState.update {
                 it.copy(
                     selectedLineStations = stations,
@@ -118,10 +91,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /**
-     * ¡NUEVA FUNCIÓN!
-     * Limpia la lista de estaciones cuando salimos de la pantalla de detalle.
-     */
     fun clearSelectedLine() {
         _uiState.update {
             it.copy(
@@ -131,9 +100,49 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // --- FAVORITOS ESTACIONES ---
+    fun loadFavorites() {
+        viewModelScope.launch {
+            _favoriteStations.value = favoriteStationDao.getFavorites().map { it.stationId }
+        }
+    }
+
+    fun addFavorite(stationId: String) {
+        viewModelScope.launch {
+            favoriteStationDao.insertFavorite(FavoriteStationEntity(stationId))
+            loadFavorites()
+        }
+    }
+
+    fun deleteFavorite(stationId: String) {
+        viewModelScope.launch {
+            favoriteStationDao.deleteFavorite(stationId)
+            loadFavorites()
+        }
+    }
+
+    // --- FAVORITOS RUTAS ---
+    fun loadFavoriteRoutes() {
+        viewModelScope.launch {
+            _favoriteRoutes.value = favoriteRouteDao.getAll()
+        }
+    }
+
+    fun addFavoriteRoute(origin: String, destination: String) {
+        viewModelScope.launch {
+            favoriteRouteDao.insert(FavoriteRouteEntity(origin = origin, destination = destination))
+            loadFavoriteRoutes()
+        }
+    }
+
+    fun removeFavoriteRoute(route: FavoriteRouteEntity) {
+        viewModelScope.launch {
+            favoriteRouteDao.delete(route)
+            loadFavoriteRoutes()
+        }
+    }
 
     // --- 3. ACCIONES DE LA UI (Planificador de Ruta) ---
-
     fun onOriginStationSelected(station: Station) {
         _uiState.update { currentState ->
             currentState.copy(
@@ -157,7 +166,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun calculateRoute() {
         val origin = _uiState.value.selectedOrigin
         val destination = _uiState.value.selectedDestination
-
         if (origin == null || destination == null) {
             _uiState.update { it.copy(routeErrorMessage = "Selecciona origen y destino") }
             return
@@ -166,19 +174,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.update { it.copy(routeErrorMessage = "El origen y destino no pueden ser iguales") }
             return
         }
-
         viewModelScope.launch {
             try {
                 val route = routeFinder.findRoute(origin.id, destination.id)
-
                 if (route != null) {
-                    _uiState.update {
-                        it.copy(calculatedRoute = route, routeErrorMessage = null)
-                    }
+                    _uiState.update { it.copy(calculatedRoute = route, routeErrorMessage = null) }
                 } else {
-                    _uiState.update {
-                        it.copy(routeErrorMessage = "No se encontró una ruta directa o con 1 transbordo.", calculatedRoute = null)
-                    }
+                    _uiState.update { it.copy(routeErrorMessage = "No se encontró una ruta directa o con 1 transbordo.", calculatedRoute = null) }
                 }
             } catch (e: Exception) {
                 _uiState.update {
@@ -188,10 +190,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /**
-     * ¡NUEVA FUNCIÓN!
-     * Limpia la selección de ruta al salir.
-     */
     fun clearRouteSearch() {
         _uiState.update { currentState ->
             currentState.copy(
@@ -202,24 +200,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             )
         }
     }
-
-    // Esta función ya no es necesaria, la lógica se movió a 'loadStationsForLine'
-    /*
-    fun getStationsForLine(lineId: String): StateFlow<List<Station>> {
-        return repository.getStationsByLine(lineId)
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000L),
-                initialValue = emptyList()
-            )
-    }
-    */
 }
 
-/**
- * Factory (Fábrica) para poder crear el MainViewModel pasándole el 'Application'
- * (Sin cambios)
- */
 class MainViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {

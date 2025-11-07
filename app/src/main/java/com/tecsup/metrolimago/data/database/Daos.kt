@@ -48,4 +48,15 @@ interface StationDao {
     @Query("SELECT * FROM stations WHERE id = :stationId")
     suspend fun getStationById(stationId: String): StationEntity?
 }
+@Dao
+interface FavoriteStationDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertFavorite(station: FavoriteStationEntity)
+
+    @Query("DELETE FROM favorite_stations WHERE stationId = :stationId")
+    suspend fun deleteFavorite(stationId: String)
+
+    @Query("SELECT * FROM favorite_stations")
+    suspend fun getFavorites(): List<FavoriteStationEntity>
+}
 

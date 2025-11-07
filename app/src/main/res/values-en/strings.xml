@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Metro Lima Go</string>
+    <string name="informacion_adicional">Additional Information</string>
+    <string name="a_donde_vas">Where do you want to go?</string>
+    <string name="rutas_favoritas">Favorite Routes</string>
+    <string name="no_tienes_rutas">You dont have favorite routes yet.</string>
+    <string name="lineas_disponibles">Available Lines</string>
+    <string name="guardar_ruta">Save as favorite route</string>
+    <string name="tiempo_estimado">Estimated time: %1$d min</string>
+    <string name="origen">Origin</string>
+    <string name="destino">Destination</string>
+    <string name="llegaste_a">You have arrived at %1$s</string>
+    <string name="permiso_ubicacion_req">Location Permission Required</string>
+    <string name="explicacion_ubicacion">To show the map and your location, we need your permission.</string>
+    <string name="conceder_permiso">Grant Permission</string>
+    <string name="abrir_configuracion">Open Settings</string>
+    <string name="busqueda">Where do you want to go?</string>
+    <string name="transbordo_en">Transfer at %1$s</string>
+    <string name="inicia_en">Starts at %1$s</string>
+    <string name="toma_linea">Take the %1$s</string>
+    <string name="sube_en">Board at %1$s</string>
+    <string name="cargando_ruta">Loading route...</string>
+</resources>
