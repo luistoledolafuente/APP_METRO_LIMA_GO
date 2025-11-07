@@ -9,7 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-@Database(entities = [TransportLineEntity::class, StationEntity::class], version = 2, exportSchema = false)
+@Database(entities = [TransportLineEntity::class, StationEntity::class], version = 3, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun lineDao(): LineDao
@@ -49,48 +49,78 @@ abstract class AppDatabase : RoomDatabase() {
          * ¡AQUÍ ESTÁ LA CORRECCIÓN DE DATOS!
          * Añadimos coordenadas reales a cada estación.
          */
+// Pega esto REEMPLAZANDO tu función populateDatabase
+
         suspend fun populateDatabase(lineDao: LineDao, stationDao: StationDao) {
-            // --- DATOS DE LÍNEAS ---
+            // --- 1. DATOS DE LÍNEAS ---
             val linea1 = TransportLineEntity("L1", "Línea 1 (Metro)", "#D32F2F", "Operativo")
             val linea2 = TransportLineEntity("L2", "Línea 2 (Metro)", "#FFA000", "En Construcción")
             val corredorAzul = TransportLineEntity("CA", "Corredor Azul", "#303F9F", "Operativo")
-            lineDao.insertAll(listOf(linea1, linea2, corredorAzul))
 
-            // --- DATOS DE ESTACIONES (LÍNEA 1) ---
+            // --- ¡NUEVA LÍNEA! ---
+            val metropolitano = TransportLineEntity("METRO", "Metropolitano (Troncal)", "#808080", "Operativo")
+
+            lineDao.insertAll(listOf(linea1, linea2, corredorAzul, metropolitano))
+
+            // --- 2. ESTACIONES LÍNEA 1 (COMPLETA Y EN ORDEN) ---
             val l1Stations = listOf(
                 StationEntity("L1-VES", "L1", "Villa El Salvador", 0, latitude = -12.2155, longitude = -76.9248),
                 StationEntity("L1-PAR", "L1", "Parque Industrial", 1, latitude = -12.2036, longitude = -76.9320),
-                StationEntity("L1-PUM", "L1", "Pumacahua", 2, latitude = -12.1930, longitude = -76.9387),
-                StationEntity("L1-VMT", "L1", "Villa María", 3, latitude = -12.1815, longitude = -76.9453),
-                StationEntity("L1-SJM", "L1", "San Juan", 4, latitude = -12.1711, longitude = -76.9535),
-                StationEntity("L1-ATO", "L1", "Atocongo", 5, latitude = -12.1613, longitude = -76.9634),
-                StationEntity("L1-JCH", "L1", "Jorge Chávez", 6, latitude = -12.1284, longitude = -77.0000),
-                StationEntity("L1-AYA", "L1", "Ayacucho", 7, latitude = -12.1158, longitude = -77.0039),
-                StationEntity("L1-ANG", "L1", "Angamos", 8, latitude = -12.1065, longitude = -77.0076),
-                StationEntity("L1-SBO", "L1", "San Borja Sur", 9, latitude = -12.0968, longitude = -77.0094),
-                StationEntity("L1-CUL", "L1", "La Cultura", 10, latitude = -12.0865, longitude = -77.0039),
-                StationEntity("L1-GAM", "L1", "Gamarra", 11, latitude = -12.0620, longitude = -77.0135),
-                StationEntity("L1-MGR", "L1", "Miguel Grau", 12, latitude = -12.0545, longitude = -77.0205),
-                StationEntity("L1-BAY", "L1", "Bayóvar", 13, latitude = -11.9866, longitude = -77.0094)
+                // ¡Coordenadas corregidas!
+                StationEntity("L1-PUM", "L1", "Pumacahua", 2, latitude = -12.1818, longitude = -76.9469),
+                StationEntity("L1-VMT", "L1", "Villa María", 3, latitude = -12.1711, longitude = -76.9535),
+                StationEntity("L1-MIG", "L1", "Miguel Iglesias", 4, latitude = -12.1663, longitude = -76.9585),
+                StationEntity("L1-SJM", "L1", "San Juan", 5, latitude = -12.1613, longitude = -76.9634),
+                StationEntity("L1-ATO", "L1", "Atocongo", 6, latitude = -12.1553, longitude = -76.9715),
+                StationEntity("L1-JCH", "L1", "Jorge Chávez", 7, latitude = -12.1284, longitude = -77.0000),
+                StationEntity("L1-AYA", "L1", "Ayacucho", 8, latitude = -12.1158, longitude = -77.0039),
+                StationEntity("L1-CAB", "L1", "Cabitos", 9, latitude = -12.1107, longitude = -77.0055),
+                StationEntity("L1-ANG", "L1", "Angamos", 10, latitude = -12.1065, longitude = -77.0076),
+                StationEntity("L1-SBO", "L1", "San Borja Sur", 11, latitude = -12.0968, longitude = -77.0094),
+                StationEntity("L1-CUL", "L1", "La Cultura", 12, latitude = -12.0865, longitude = -77.0039),
+                StationEntity("L1-ARR", "L1", "Arriola", 13, latitude = -12.0735, longitude = -77.0089),
+                StationEntity("L1-GAM", "L1", "Gamarra", 14, latitude = -12.0620, longitude = -77.0135),
+                StationEntity("L1-MGR", "L1", "Miguel Grau", 15, latitude = -12.0545, longitude = -77.0205),
+                StationEntity("L1-ANG", "L1", "El Ángel", 16, latitude = -12.0445, longitude = -77.0195),
+                StationEntity("L1-PRE", "L1", "Presbítero Maestro", 17, latitude = -12.0378, longitude = -77.0182),
+                StationEntity("L1-CAJ", "L1", "Caja de Agua", 18, latitude = -12.0238, longitude = -77.0102),
+                StationEntity("L1-PIR", "L1", "Pirámide del Sol", 19, latitude = -12.0157, longitude = -77.0092),
+                StationEntity("L1-JAR", "L1", "Los Jardines", 20, latitude = -12.0083, longitude = -77.0091),
+                StationEntity("L1-POS", "L1", "Los Postes", 21, latitude = -12.0019, longitude = -77.0090),
+                StationEntity("L1-SCA", "L1", "San Carlos", 22, latitude = -11.9950, longitude = -77.0088),
+                StationEntity("L1-SMA", "L1", "San Martín", 23, latitude = -11.9899, longitude = -77.0091),
+                StationEntity("L1-SRO", "L1", "Santa Rosa", 24, latitude = -11.9825, longitude = -77.0093),
+                StationEntity("L1-BAY", "L1", "Bayóvar", 25, latitude = -11.9765, longitude = -77.0102)
             )
 
-            // --- DATOS DE ESTACIONES (LÍNEA 2 - SIMULADA) ---
+            // --- 3. ESTACIONES LÍNEA 2 (SIMULADA) ---
             val l2Stations = listOf(
                 StationEntity("L2-ATE", "L2", "Municipalidad de Ate", 0, latitude = -12.0520, longitude = -76.9298),
                 StationEntity("L2-MER", "L2", "Mercado Santa Anita", 1, latitude = -12.0537, longitude = -76.9534),
                 StationEntity("L2-EVT", "L2", "Evitamiento", 2, latitude = -12.0558, longitude = -76.9830),
-                StationEntity("L2-GAM", "L2", "Gamarra", 3, latitude = -12.0622, longitude = -77.0138) // Coordenada ligeramente dif a L1
+                StationEntity("L2-GAM", "L2", "Gamarra", 3, latitude = -12.0622, longitude = -77.0138)
             )
 
-            // --- DATOS DE ESTACIONES (CORREDOR AZUL - SIMULADO) ---
+            // --- 4. ESTACIONES CORREDOR AZUL (SIMULADO) ---
             val caStations = listOf(
                 StationEntity("CA-AMA", "CA", "Amancaes", 0, latitude = -12.0229, longitude = -77.0315),
                 StationEntity("CA-TAC", "CA", "Tacna", 1, latitude = -12.0523, longitude = -77.0384),
-                StationEntity("CA-AYA", "CA", "Ayacucho", 2, latitude = -12.1160, longitude = -77.0042), // Cerca de L1
+                StationEntity("CA-AYA", "CA", "Ayacucho", 2, latitude = -12.1160, longitude = -77.0042),
                 StationEntity("CA-LAR", "CA", "Larcomar", 3, latitude = -12.1332, longitude = -77.0298)
             )
 
-            stationDao.insertAll(l1Stations + l2Stations + caStations)
+            // --- 5. ¡NUEVAS ESTACIONES! (Metropolitano Troncal) ---
+            val metroStations = listOf(
+                StationEntity("METRO-NAR", "METRO", "Naranjal (Terminal)", 0, latitude = -11.9912, longitude = -77.0583),
+                StationEntity("METRO-UNI", "METRO", "UNI", 1, latitude = -12.0225, longitude = -77.0494),
+                StationEntity("METRO-EST", "METRO", "Estación Central", 2, latitude = -12.0588, longitude = -77.0366),
+                StationEntity("METRO-JAV", "METRO", "Javier Prado", 3, latitude = -12.0886, longitude = -77.0305),
+                StationEntity("METRO-CAN", "METRO", "Canaval y Moreyra", 4, latitude = -12.0991, longitude = -77.0272),
+                StationEntity("METRO-ANG", "METRO", "Angamos", 5, latitude = -12.1129, longitude = -77.0232),
+                StationEntity("METRO-MAT", "METRO", "Matellini (Terminal)", 6, latitude = -12.1868, longitude = -77.0093)
+            )
+
+            stationDao.insertAll(l1Stations + l2Stations + caStations + metroStations)
         }
     }
 }

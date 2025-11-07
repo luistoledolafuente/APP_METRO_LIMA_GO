@@ -36,8 +36,14 @@ class RouteFinder(private val repository: OfflineRepository) {
     // Usamos el NOMBRE de la estación para la conexión.
     // OJO: Los nombres deben coincidir EXACTAMENTE con los de AppDatabase.kt
     private val transferPoints = mapOf(
-        "Ayacucho" to listOf("L1", "CA"), // Conexión Línea 1 y Corredor Azul
-        "Gamarra" to listOf("L1", "L2")  // Conexión Línea 1 y Línea 2
+        "Ayacucho" to listOf("L1", "CA"),      // Conexión Línea 1 y Corredor Azul
+        "Gamarra" to listOf("L1", "L2"),     // Conexión Línea 1 y Línea 2
+
+        // --- ¡NUEVA CONEXIÓN! ---
+        // (La Estación Central del Metro se conecta con la Estación Miguel Grau de L1)
+        // (Es una simulación, en la vida real es Grau)
+        "Miguel Grau" to listOf("L1", "METRO"),
+        "Estación Central" to listOf("METRO", "L1")
     )
 
     // Simplificación: 3 minutos por estación, 10 minutos por transbordo
