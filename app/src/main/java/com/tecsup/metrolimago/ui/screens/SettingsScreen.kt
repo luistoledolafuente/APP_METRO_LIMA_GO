@@ -4,11 +4,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CreditCard
+// --- 1. IMPORT DE TARJETA ELIMINADO (Ya no se usa) ---
+// import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Security
-// --- 1. NUEVOS IMPORTS ---
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material.icons.outlined.SettingsSystemDaydream
@@ -46,6 +46,23 @@ fun SettingsScreen(
     // --- 2. OBTENER EL ESTADO ACTUAL DE LA UI ---
     val uiState by viewModel.uiState.collectAsState()
 
+    // --- 3. ¡TEXTOS EXTENDIDOS! ---
+    val travelTips = """
+        • (AVISO) Servicio restringido en Estación Central (Simulación).
+        • Planifica tu ruta antes de salir de casa.
+        • Recarga tu tarjeta con anticipación para evitar colas.
+        • Cede el asiento a quien lo necesite (adultos mayores, embarazadas, etc.).
+    """.trimIndent()
+
+    val securityTips = """
+        • Mantén tus pertenencias (móvil, billetera) en un lugar seguro y a la vista, preferiblemente en bolsillos delanteros.
+        • Evita llevar objetos de valor a la vista.
+        • En horas punta, sujeta bien tu mochila o cartera por delante.
+        • No aceptes ayuda de extraños en los cajeros o máquinas de recarga.
+        • Respeta la línea amarilla y espera el tren detrás de ella.
+    """.trimIndent()
+
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -74,25 +91,22 @@ fun SettingsScreen(
             item {
                 Text("Información", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
-            item {
-                InfoCard(
-                    icon = Icons.Default.CreditCard,
-                    title = "Tarifas y Métodos de Pago",
-                    content = "La tarifa general para la Línea 1 y Línea 2 es de S/ 1.50..."
-                )
-            }
+
+            // --- 4. ¡TARJETA DE TARIFAS ELIMINADA! ---
+            // Se ha quitado el item que contenía la InfoCard de CreditCard
+
             item {
                 InfoCard(
                     icon = Icons.Default.NewReleases,
-                    title = "Avisos Importantes (Mock)",
-                    content = "• (HOY) Servicio restringido en la Estación Central..."
+                    title = "Avisos y Recomendaciones", // Título actualizado
+                    content = travelTips // Contenido actualizado
                 )
             }
             item {
                 InfoCard(
                     icon = Icons.Default.Security,
                     title = "Consejos de Seguridad",
-                    content = "• Cuida tus pertenencias en todo momento..."
+                    content = securityTips // Contenido actualizado
                 )
             }
 
@@ -102,7 +116,6 @@ fun SettingsScreen(
                 Text("Ajustes de la App", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
 
-            // --- 3. REEMPLAZO DEL DUMMY "IDIOMA" ---
             item {
                 Text("Apariencia", style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.height(8.dp))
@@ -113,7 +126,6 @@ fun SettingsScreen(
                     }
                 )
             }
-            // --- FIN DEL REEMPLAZO ---
 
             item {
                 SettingRow(
@@ -181,8 +193,7 @@ fun SettingRow(icon: ImageVector, title: String, subtitle: String) {
     }
 }
 
-// --- 4. NUEVO COMPOSABLE PARA LOS BOTONES DE TEMA ---
-
+// (ThemeSelector y sus funciones auxiliares se quedan igual)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ThemeSelector(
