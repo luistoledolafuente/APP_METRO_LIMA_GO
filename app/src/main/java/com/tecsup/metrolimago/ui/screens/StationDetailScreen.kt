@@ -20,6 +20,12 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarBorder
 // --- FIN DE IMPORTS ---
+
+// --- ¡NUEVOS IMPORTS AÑADIDOS! ---
+import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.MonetizationOn
+// --- FIN DE NUEVOS IMPORTS ---
+
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -207,13 +213,74 @@ fun StationDetailScreen(
                             InfoRow(icon = Icons.Default.Business, label = "Línea", value = line.name)
                         }
                     }
-                }
 
-                // (Aquí podrías agregar otra sección para "Servicios Cercanos" - Req 2)
+                    // --- 4. ¡NUEVA TARJETA DE TARIFAS! ---
+                    Spacer(modifier = Modifier.height(16.dp)) // Espacio entre tarjetas
+                    Text("Tarifas y Pagos", style = MaterialTheme.typography.titleLarge)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        elevation = CardDefaults.cardElevation(2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            // ¡Llamamos al nuevo Composable!
+                            PaymentInfo(lineId = line.id)
+                        }
+                    }
+                    // --- FIN DE LA NUEVA TARJETA ---
+                }
             }
         }
     }
 }
+
+/**
+ * ¡NUEVO COMPOSABLE!
+ * Un Composable helper para mostrar la info de tarifa y pago
+ * según el ID de la línea.
+ */
+@Composable
+private fun PaymentInfo(lineId: String) {
+    val fare: String
+    val paymentMethod: String
+
+    // Determinamos la información basada en el ID de la línea
+    when (lineId) {
+        "L1" -> {
+            fare = "S/ 1.50 (Tarifa General)"
+            paymentMethod = "Tarjeta recargable de Línea 1"
+        }
+        "L2" -> {
+            fare = "S/ 1.50 (Tarifa General)"
+            paymentMethod = "Tarjeta interoperable (futuro)"
+        }
+        "CA" -> {
+            fare = "S/ 2.35 (Tarifa General)"
+            paymentMethod = "Tarjeta Lima Pass o Metropolitano"
+        }
+        "METRO" -> {
+            fare = "S/ 3.20 (Tarifa Troncal)"
+            paymentMethod = "Tarjeta Lima Pass o Metropolitano"
+        }
+        else -> {
+            fare = "No disponible"
+            paymentMethod = "No disponible"
+        }
+    }
+
+    // Usamos el InfoRow que ya existía
+    InfoRow(
+        icon = Icons.Default.MonetizationOn,
+        label = "Tarifa",
+        value = fare
+    )
+    InfoRow(
+        icon = Icons.Default.CreditCard,
+        label = "Método de Pago",
+        value = paymentMethod
+    )
+}
+
 
 /**
  * Un Composable helper para mostrar una fila de información (ícono, label, valor)

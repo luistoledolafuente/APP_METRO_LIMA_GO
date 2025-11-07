@@ -1,3 +1,97 @@
 <resources>
     <string name="app_name">MetroLimaGo</string>
+
+    <!-- Barra de Navegación Inferior -->
+    <string name="bottom_nav_home">Inicio</string>
+    <string name="bottom_nav_favorites">Favoritos</string>
+    <string name="bottom_nav_lines">Líneas</string>
+    <string name="bottom_nav_stations">Estaciones</string>
+    <string name="bottom_nav_settings">Ajustes</string>
+
+    <!-- Pantalla: Home -->
+    <string name="home_search_greeting">Hola, Carlos</string>
+    <string name="home_search_prompt">¿A dónde vamos?</string>
+    <string name="home_search_icon_desc">Buscar</string>
+    <string name="home_settings_icon_desc">Ajustes</string>
+    <string name="permission_denied_title">Permiso de Ubicación Requerido</string>
+    <string name="permission_denied_body">Para mostrar el mapa y tu ubicación, necesitamos que nos des permiso.</string>
+    <string name="permission_grant_button">Conceder Permiso</string>
+    <string name="permission_open_settings_button">Abrir Configuración</string>
+
+    <!-- Pantalla: Favoritos -->
+    <string name="favorites_title">Mis Estaciones Favoritas</string>
+    <string name="favorites_empty_state">Aún no has añadido favoritos.\nPresiona la estrella (★) en el detalle de una estación para guardarla aquí.</string>
+
+    <!-- Pantallas: Listas (Líneas y Estaciones) -->
+    <string name="all_lines_title">Todas las Líneas</string>
+    <string name="all_lines_back_button">Regresar</string>
+    <string name="line_header_icon_desc">Línea</string>
+    <string name="all_stations_title">Todas las Estaciones</string>
+    <string name="all_stations_search_placeholder">Buscar estación…</string>
+    <string name="all_stations_search_icon_desc">Buscar</string>
+    <string name="station_list_item_icon_desc">Estación</string>
+    <string name="station_list_item_line_prefix">Línea %1$s</string> <!-- ej. "Línea 1" -->
+
+    <!-- Pantalla: Detalle de Estación -->
+    <string name="station_detail_loading">Cargando…</string>
+    <string name="station_detail_back_button">Regresar</string>
+    <string name="station_detail_favorite_button">Marcar como Favorito</string>
+    <string name="station_detail_image_desc">Foto de la estación %1$s</string>
+    <string name="station_detail_info_title">Información</string>
+    <string name="station_detail_info_status">Estado</string>
+    <string name="station_detail_info_schedule">Horario</string>
+    <string name="station_detail_info_line">Línea</string>
+
+    <!-- Pantalla: Detalle de Línea -->
+    <string name="line_detail_stations_title">Estaciones</string>
+
+    <!-- Pantalla: Ajustes -->
+    <string name="settings_title">Ajustes e Información</string>
+    <string name="settings_info_title">Información</string>
+    <string name="settings_info_card_1_title">Tarifas y Métodos de Pago</string>
+    <string name="settings_info_card_1_body">La tarifa general para la Línea 1 y Línea 2 es de S/ 1.50. El Metropolitano es S/ 3.20.</string>
+    <string name="settings_info_card_2_title">Avisos Importantes (Mock)</string>
+    <string name="settings_info_card_2_body">• (HOY) Servicio restringido en la Estación Central por evento.\n• Domingo: Horario especial de 06:00 a 21:00.</string>
+    <string name="settings_info_card_3_title">Consejos de Seguridad</string>
+    <string name="settings_info_card_3_body">• Cuida tus pertenencias en todo momento.\n• No uses el celular cerca de las puertas.</string>
+    <string name="settings_app_settings_title">Ajustes de la App</string>
+    <string name="settings_appearance_title">Apariencia</string>
+    <string name="settings_theme_light">Claro</string>
+    <string name="settings_theme_dark">Oscuro</string>
+    <string name="settings_theme_system">Sistema</string>
+    <string name="settings_language_title">Idioma</string>
+    <string name="settings_language_es">Español</string>
+    <string name="settings_language_en">English</string>
+    <string name="settings_version_title">Versión</string>
+    <string name="settings_version_body">1.0.0 (Beta)</string>
+
+    <!-- Pantalla: Planificador de Ruta -->
+    <string name="planner_title">Planificar Ruta</string>
+    <string name="planner_card_title">Selecciona tu viaje</string>
+    <string name="planner_origin_label">Estación de Origen</string>
+    <string name="planner_destination_label">Estación de Destino</string>
+    <string name="planner_swap_button_desc">Intercambiar Origen/Destino</string>
+    <string name="planner_select_station">Seleccionar estación</string>
+    <string name="planner_expand_button_desc">Expandir</string>
+    <string name="planner_calculate_button">Calcular Ruta</string>
+    <string name="planner_bottom_sheet_title">Seleccionar Estación</string>
+    <string name="planner_error_no_selection">Selecciona origen y destino</string>
+    <string name="planner_error_same_station">El origen y destino no pueden ser iguales</string>
+
+    <!-- Pantalla: Resultado de Ruta -->
+    <string name="route_result_origin_marker">Origen: %1$s</string>
+    <string name="route_result_destination_marker">Destino: %1$s</string>
+    <string name="route_result_back_button">Regresar</string>
+    <string name="route_result_summary_time">Tiempo</string>
+    <string name="route_result_summary_from">Desde %1$s</string>
+    <string name="route_result_summary_destination_icon">Destino</string>
+    <string name="route_result_segment_stations">%1$d estaciones</string>
+    <string name="route_result_segment_final_station">Estación final</string>
+    <string name="route_result_segment_disembark">Bajar en: %1$s</string>
+    <string name="route_result_segment_show_stops">Ver %1$d paraderos</string>
+    <string name="route_result_segment_hide_stops">Ocultar paraderos</string>
+    <string name="route_result_transfer_title">Transbordo</string>
+    <string name="route_result_transfer_icon_desc">Transbordo</string>
+    <string name="route_result_transfer_message">Transbordo en %1$s a la %2$s</string>
+
 </resources>
