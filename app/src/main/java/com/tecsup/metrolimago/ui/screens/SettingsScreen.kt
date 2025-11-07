@@ -8,15 +8,34 @@ import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Translate
-import androidx.compose.material3.*
+// --- 1. NUEVOS IMPORTS ---
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.LightMode
+import androidx.compose.material.icons.outlined.SettingsSystemDaydream
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState // <-- Importar
+import androidx.compose.runtime.getValue // <-- Importar
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tecsup.metrolimago.viewmodel.MainViewModel
+import com.tecsup.metrolimago.viewmodel.ThemeSetting // <-- Importar el Enum
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,6 +43,9 @@ fun SettingsScreen(
     viewModel: MainViewModel,
     onNavigateBack: () -> Unit,
 ) {
+    // --- 2. OBTENER EL ESTADO ACTUAL DE LA UI ---
+    val uiState by viewModel.uiState.collectAsState()
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -48,8 +70,6 @@ fun SettingsScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
-            // (La sección de Favoritos ya no está aquí, está en FavoritesScreen)
 
             item {
                 Text("Información", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -76,19 +96,25 @@ fun SettingsScreen(
                 )
             }
 
-            // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
             item { HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp)) }
 
             item {
                 Text("Ajustes de la App", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
+
+            // --- 3. REEMPLAZO DEL DUMMY "IDIOMA" ---
             item {
-                SettingRow(
-                    icon = Icons.Default.Translate,
-                    title = "Idioma",
-                    subtitle = "Español (Latinoamérica)"
+                Text("Apariencia", style = MaterialTheme.typography.bodyLarge)
+                Spacer(modifier = Modifier.height(8.dp))
+                ThemeSelector(
+                    currentTheme = uiState.theme,
+                    onThemeSelected = { newTheme ->
+                        viewModel.setTheme(newTheme) // Llama al ViewModel
+                    }
                 )
             }
+            // --- FIN DEL REEMPLAZO ---
+
             item {
                 SettingRow(
                     icon = Icons.Default.Info,
@@ -152,5 +178,57 @@ fun SettingRow(icon: ImageVector, title: String, subtitle: String) {
             Text(text = title, style = MaterialTheme.typography.bodyLarge)
             Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+    }
+}
+
+// --- 4. NUEVO COMPOSABLE PARA LOS BOTONES DE TEMA ---
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ThemeSelector(
+    currentTheme: ThemeSetting,
+    onThemeSelected: (ThemeSetting) -> Unit
+) {
+    val options = listOf(ThemeSetting.LIGHT, ThemeSetting.DARK, ThemeSetting.SYSTEM)
+
+    SingleChoiceSegmentedButtonRow(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        options.forEach { theme ->
+            SegmentedButton(
+                shape = SegmentedButtonDefaults.itemShape(index = options.indexOf(theme), count = options.size),
+                onClick = { onThemeSelected(theme) },
+                selected = currentTheme == theme
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = getIconForTheme(theme),
+                        contentDescription = getLabelForTheme(theme),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(getLabelForTheme(theme))
+                }
+            }
+        }
+    }
+}
+
+private fun getLabelForTheme(theme: ThemeSetting): String {
+    return when (theme) {
+        ThemeSetting.LIGHT -> "Claro"
+        ThemeSetting.DARK -> "Oscuro"
+        ThemeSetting.SYSTEM -> "Sistema"
+    }
+}
+
+private fun getIconForTheme(theme: ThemeSetting): ImageVector {
+    return when (theme) {
+        ThemeSetting.LIGHT -> Icons.Outlined.LightMode
+        ThemeSetting.DARK -> Icons.Outlined.DarkMode
+        ThemeSetting.SYSTEM -> Icons.Outlined.SettingsSystemDaydream
     }
 }
