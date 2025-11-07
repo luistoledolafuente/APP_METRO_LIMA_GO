@@ -16,15 +16,13 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Schedule
-// --- 1. IMPORTAR ÍCONOS DE ESTRELLA ---
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarBorder
-// --- FIN DE IMPORTS ---
-
-// --- ¡NUEVOS IMPORTS AÑADIDOS! ---
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.MonetizationOn
-// --- FIN DE NUEVOS IMPORTS ---
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.LocalPharmacy
+import androidx.compose.material.icons.filled.Restaurant
 
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -56,21 +54,27 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.tecsup.metrolimago.viewmodel.MainViewModel
 
-// --- NUEVAS IMPORTACIONES PARA LA IMAGEN AUTOMÁTICA ---
 import coil.compose.AsyncImage
 import com.tecsup.metrolimago.BuildConfig
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import com.tecsup.metrolimago.R
-// --- FIN DE NUEVAS IMPORTACIONES ---
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+
+// --- ¡NUEVAS LISTAS DE DATOS MOCK! ---
+import com.tecsup.metrolimago.data.database.Station
+import kotlin.math.abs
+
+// Listas de datos estáticos para la simulación
+private val mockBancos = listOf("BCP", "Interbank", "Scotiabank", "BBVA", "Banco de la Nación")
+private val mockFarmacias = listOf("Inkafarma", "MiFarma", "Farmacia Universal", "Farmacia del Pueblo", "Boticas y Salud")
+private val mockRestaurantes = listOf("Norky's", "Bembos", "Tambo", "KFC", "Pizza Hut", "McDonald's")
+// --- FIN DE LISTAS MOCK ---
+
 
 // (Centro de Lima - Fallback)
 private val limaCenter = LatLng(-12.046374, -77.042793)
 
-/**
- * Pantalla que muestra el detalle de una estación (Req 2).
- * ¡ACTUALIZADA CON BOTÓN DE FAVORITOS E IMAGEN AUTOMÁTICA!
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StationDetailScreen(
@@ -81,7 +85,6 @@ fun StationDetailScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     // --- LÓGICA DE DATOS ---
-    // Buscamos la estación en 'allStations' para tener el estado 'isFavorite' más reciente
     val station = uiState.allStations.find { it.id == stationId }
     val line = uiState.allLines.find { it.id == station?.lineId }
 
@@ -101,9 +104,9 @@ fun StationDetailScreen(
     }
 
     val mapUiSettings = MapUiSettings(
-        zoomControlsEnabled = false,
-        zoomGesturesEnabled = false,
-        scrollGesturesEnabled = false
+        zoomControlsEnabled = true,
+        zoomGesturesEnabled = true,
+        scrollGesturesEnabled = true
     )
 
     Scaffold(
@@ -114,23 +117,19 @@ fun StationDetailScreen(
                     containerColor = line?.color ?: MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
                     navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary // Color para la estrella
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
                     }
                 },
-                // --- Botón de Acción (Estrella) ---
                 actions = {
-                    // Solo mostramos el botón si la estación ha cargado
                     if (station != null) {
                         IconButton(onClick = {
-                            // ¡Llamamos al ViewModel!
                             viewModel.toggleFavorite(station)
                         }) {
                             Icon(
-                                // Cambia el ícono si es favorito o no
                                 imageVector = if (station.isFavorite) {
                                     Icons.Filled.Star
                                 } else {
@@ -157,7 +156,7 @@ fun StationDetailScreen(
                     .verticalScroll(rememberScrollState())
             ) {
 
-                // --- 1. Tarjeta del Mapa (REAL) ---
+                // --- 1. Tarjeta del Mapa (ACTUALIZADA) ---
                 GoogleMap(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -165,42 +164,57 @@ fun StationDetailScreen(
                     cameraPositionState = cameraPositionState,
                     uiSettings = mapUiSettings
                 ) {
+                    // Marcador de la Estación (Principal)
                     Marker(
                         state = MarkerState(position = stationLocation),
                         title = station.name
                     )
+
+                    // --- ¡MARCADORES MOCK DINÁMICOS! ---
+
+                    // 1. Obtenemos los nombres dinámicos
+                    val (banco, farmacia, restaurante) = getMockServiceNames(station)
+
+                    // 2. Creamos los pines con esos nombres
+                    val mockServices = listOf(
+                        Pair(LatLng(stationLocation.latitude + 0.0008, stationLocation.longitude + 0.0008), restaurante),
+                        Pair(LatLng(stationLocation.latitude - 0.0005, stationLocation.longitude + 0.001), farmacia),
+                        Pair(LatLng(stationLocation.latitude + 0.0002, stationLocation.longitude - 0.001), banco)
+                    )
+
+                    mockServices.forEach { (location, title) ->
+                        Marker(
+                            state = MarkerState(position = location),
+                            title = title, // Título dinámico
+                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
+                        )
+                    }
+                    // --- FIN DE MARCADORES MOCK ---
                 }
 
                 // --- 2. IMAGEN AUTOMÁTICA DE STREET VIEW ---
-
-                // Obtenemos la API Key desde el BuildConfig
                 val apiKey = BuildConfig.MAPS_API_KEY
-
-                // Construimos la URL de Street View
                 val imageUrl = "https://maps.googleapis.com/maps/api/streetview?" +
-                        "size=600x400" + // Tamaño de la imagen
-                        "&location=${station.latitude},${station.longitude}" + // Coordenadas
-                        "&pitch=-20" + // Un pequeño ángulo hacia abajo
+                        "size=600x400" +
+                        "&location=${station.latitude},${station.longitude}" +
+                        "&pitch=-20" +
                         "&key=$apiKey"
 
-                // Usamos AsyncImage de Coil para cargar la URL
                 AsyncImage(
-                    model = imageUrl, // La URL que acabamos de construir
+                    model = imageUrl,
                     contentDescription = "Foto de la estación ${station.name}",
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp),
-                    contentScale = ContentScale.Crop, // Rellena el espacio
-
-                    // Imagen que se muestra mientras carga (fondo de tu ícono)
+                    contentScale = ContentScale.Crop,
                     placeholder = painterResource(id = R.drawable.ic_launcher_background),
-
-                    // Imagen que se muestra si falla (ej. sin internet o sin foto)
                     error = painterResource(id = R.drawable.ic_launcher_background)
                 )
 
-                // --- 3. Tarjeta de Información (Contenido) ---
+                // --- Contenido Principal (Tarjetas) ---
                 Column(modifier = Modifier.padding(16.dp)) {
+
+                    // --- 3. Tarjeta de Información ---
                     Text("Información", style = MaterialTheme.typography.titleLarge)
                     Spacer(modifier = Modifier.height(8.dp))
                     Card(
@@ -214,8 +228,8 @@ fun StationDetailScreen(
                         }
                     }
 
-                    // --- 4. ¡NUEVA TARJETA DE TARIFAS! ---
-                    Spacer(modifier = Modifier.height(16.dp)) // Espacio entre tarjetas
+                    // --- 4. Tarjeta de Tarifas ---
+                    Spacer(modifier = Modifier.height(16.dp))
                     Text("Tarifas y Pagos", style = MaterialTheme.typography.titleLarge)
                     Spacer(modifier = Modifier.height(8.dp))
                     Card(
@@ -223,11 +237,23 @@ fun StationDetailScreen(
                         elevation = CardDefaults.cardElevation(2.dp)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            // ¡Llamamos al nuevo Composable!
                             PaymentInfo(lineId = line.id)
                         }
                     }
-                    // --- FIN DE LA NUEVA TARJETA ---
+
+                    // --- 5. Tarjeta de Servicios Cercanos (ACTUALIZADA) ---
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Servicios Cercanos (Simulado)", style = MaterialTheme.typography.titleLarge)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        elevation = CardDefaults.cardElevation(2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            // ¡Llamamos al Composable pasándole la estación!
+                            NearbyServices(station = station)
+                        }
+                    }
                 }
             }
         }
@@ -235,16 +261,61 @@ fun StationDetailScreen(
 }
 
 /**
- * ¡NUEVO COMPOSABLE!
- * Un Composable helper para mostrar la info de tarifa y pago
- * según el ID de la línea.
+ * ¡NUEVA FUNCIÓN HELPER!
+ * Genera nombres de servicios mock "pseudo-aleatorios" pero consistentes
+ * basados en el nombre de la estación.
+ */
+@Composable
+private fun getMockServiceNames(station: Station): Triple<String, String, String> {
+    // Usamos el 'hashCode' para obtener un número "único" de la estación
+    val index = abs(station.name.hashCode())
+
+    // Usamos el índice para seleccionar de forma consistente un item de cada lista
+    val banco = mockBancos[index % mockBancos.size]
+    val farmacia = mockFarmacias[index % mockFarmacias.size]
+    val restaurante = mockRestaurantes[index % mockRestaurantes.size]
+
+    return Triple(banco, farmacia, restaurante)
+}
+
+
+/**
+ * Composable helper para Servicios (ACTUALIZADO)
+ * Ahora recibe la estación para generar datos dinámicos.
+ */
+@Composable
+private fun NearbyServices(station: Station) {
+
+    // 1. Obtenemos los nombres dinámicos
+    val (banco, farmacia, restaurante) = getMockServiceNames(station)
+
+    // 2. Mostramos los nombres en la UI
+    InfoRow(
+        icon = Icons.Default.Restaurant,
+        label = "Restaurantes",
+        value = restaurante
+    )
+    InfoRow(
+        icon = Icons.Default.LocalPharmacy,
+        label = "Farmacias",
+        value = farmacia
+    )
+    InfoRow(
+        icon = Icons.Default.AccountBalance,
+        label = "Bancos/Agentes",
+        value = banco
+    )
+}
+
+
+/**
+ * Composable helper para Tarifas (Sin cambios)
  */
 @Composable
 private fun PaymentInfo(lineId: String) {
     val fare: String
     val paymentMethod: String
 
-    // Determinamos la información basada en el ID de la línea
     when (lineId) {
         "L1" -> {
             fare = "S/ 1.50 (Tarifa General)"
@@ -268,7 +339,6 @@ private fun PaymentInfo(lineId: String) {
         }
     }
 
-    // Usamos el InfoRow que ya existía
     InfoRow(
         icon = Icons.Default.MonetizationOn,
         label = "Tarifa",
@@ -284,7 +354,6 @@ private fun PaymentInfo(lineId: String) {
 
 /**
  * Un Composable helper para mostrar una fila de información (ícono, label, valor)
- * (Sin cambios)
  */
 @Composable
 private fun InfoRow(icon: ImageVector, label: String, value: String) {
