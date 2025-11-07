@@ -21,13 +21,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.outlined.DirectionsWalk // <-- CORRECCIÓN DE IMPORT
+import androidx.compose.material.icons.automirrored.outlined.DirectionsWalk
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.LocationOn
+// --- ¡NUEVO IMPORT DE ICONO! ---
+import androidx.compose.material.icons.outlined.MonetizationOn
 import androidx.compose.material.icons.outlined.Train
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider // <-- CORRECCIÓN DE IMPORT
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -48,11 +50,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.BitmapDescriptorFactory // <-- IMPORT AÑADIDO
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties // <-- IMPORT AÑADIDO
+import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
@@ -93,24 +95,23 @@ fun RouteResultScreen(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
                 uiSettings = MapUiSettings(zoomControlsEnabled = false, myLocationButtonEnabled = true),
-                properties = MapProperties(isMyLocationEnabled = true) // <-- ARREGLADO
+                properties = MapProperties(isMyLocationEnabled = true)
             ) {
+                // ... (Marcadores y Polylines sin cambios)
                 validRoute.segments.firstOrNull()?.startStation?.let {
                     Marker(
                         state = MarkerState(position = LatLng(it.latitude, it.longitude)),
                         title = "Origen: ${it.name}",
-                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN) // <-- Icono Origen
+                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
                     )
                 }
-
                 validRoute.segments.lastOrNull()?.endStation?.let {
                     Marker(
                         state = MarkerState(position = LatLng(it.latitude, it.longitude)),
                         title = "Destino: ${it.name}",
-                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED) // <-- Icono Destino
+                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
                     )
                 }
-
                 validRoute.segments.forEach { segment ->
                     Polyline(
                         points = segment.stationsInSegment.map { LatLng(it.latitude, it.longitude) },
@@ -151,13 +152,14 @@ fun RouteResultScreen(
                             .align(Alignment.CenterHorizontally)
                     )
 
+                    // --- ¡TARJETA ACTUALIZADA CON COSTO! ---
                     RouteSummaryCard(
                         time = validRoute.totalTimeEstimate,
+                        cost = validRoute.totalCost, // <-- Pasamos el costo
                         origin = validRoute.segments.firstOrNull()?.startStation?.name ?: "N/A",
                         destination = validRoute.segments.lastOrNull()?.endStation?.name ?: "N/A"
                     )
 
-                    // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
                     HorizontalDivider(
                         modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
                         color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
@@ -179,13 +181,17 @@ fun RouteResultScreen(
     }
 }
 
-// --- RouteSummaryCard (Sin cambios) ---
+// --- RouteSummaryCard (¡ACTUALIZADA!) ---
 @Composable
 fun RouteSummaryCard(
     time: Int,
+    cost: Double, // <-- Nuevo parámetro
     origin: String,
     destination: String
 ) {
+    // Formateamos el costo a "S/ X.XX"
+    val costString = String.format("S/ %.2f", cost)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -200,33 +206,54 @@ fun RouteSummaryCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween // Distribuir espacio
         ) {
-            Icon(
-                imageVector = Icons.Outlined.AccessTime,
-                contentDescription = "Tiempo",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(28.dp)
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "$time min",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+            // --- Columna de Tiempo ---
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Outlined.AccessTime,
+                    contentDescription = "Tiempo",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp)
                 )
-                Text(
-                    text = "Desde $origin",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = "$time min",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Desde $origin",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
-            Icon(
-                imageVector = Icons.Outlined.LocationOn,
-                contentDescription = "Destino",
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(28.dp)
-            )
+
+            // --- ¡NUEVA COLUMNA DE COSTO! ---
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Outlined.MonetizationOn,
+                    contentDescription = "Costo",
+                    tint = MaterialTheme.colorScheme.primary, // O usa un color verde
+                    modifier = Modifier.size(28.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = costString,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Estimado",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }
@@ -338,7 +365,6 @@ fun TransferItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
             imageVector = Icons.AutoMirrored.Outlined.DirectionsWalk,
             contentDescription = "Transbordo",
             tint = MaterialTheme.colorScheme.onSurfaceVariant,

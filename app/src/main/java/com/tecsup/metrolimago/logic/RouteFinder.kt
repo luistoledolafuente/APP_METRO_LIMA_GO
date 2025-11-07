@@ -9,10 +9,13 @@ import com.tecsup.metrolimago.data.database.TransportLine
 /**
  * Representa una ruta completa, que puede tener varios segmentos.
  * Ej: [Segmento Línea 1, Segmento Corredor Azul]
+ *
+ * --- ¡ACTUALIZADO CON COSTO TOTAL! ---
  */
 data class RouteResult(
     val segments: List<RouteSegment>,
-    val totalTimeEstimate: Int // en minutos
+    val totalTimeEstimate: Int, // en minutos
+    val totalCost: Double // ¡NUEVO CAMPO!
 )
 
 /**
@@ -32,19 +35,38 @@ data class RouteSegment(
  */
 class RouteFinder(private val repository: OfflineRepository) {
 
-    // SIMULACIÓN: Definimos conexiones. En un sistema real, esto vendría de la DB.
-    // Usamos el NOMBRE de la estación para la conexión.
-    // OJO: Los nombres deben coincidir EXACTAMENTE con los de AppDatabase.kt
+    // SIMULACIÓN: Definimos conexiones.
     private val transferPoints = mapOf(
-        "Ayacucho" to listOf("L1", "CA"),      // Conexión Línea 1 y Corredor Azul
-        "Gamarra" to listOf("L1", "L2"),     // Conexión Línea 1 y Línea 2
-
-        // --- ¡NUEVA CONEXIÓN! ---
-        // (La Estación Central del Metro se conecta con la Estación Miguel Grau de L1)
-        // (Es una simulación, en la vida real es Grau)
+        "Ayacucho" to listOf("L1", "CA"),
+        "Gamarra" to listOf("L1", "L2"),
         "Miguel Grau" to listOf("L1", "METRO"),
         "Estación Central" to listOf("METRO", "L1")
     )
+
+    // --- ¡NUEVAS FUNCIONES DE CÁLCULO! ---
+
+    /**
+     * Devuelve el precio (Double) de la tarifa para una línea específica.
+     */
+    private fun getFareForLine(lineId: String): Double {
+        return when (lineId) {
+            "L1" -> 1.50
+            "L2" -> 1.50 // Asumimos 1.50
+            "CA" -> 2.35
+            "METRO" -> 3.20
+            else -> 0.0 // Tarifa desconocida
+        }
+    }
+
+    /**
+     * Calcula el costo total de la ruta sumando la tarifa de cada segmento.
+     * Asume que cada transbordo (cada nuevo segmento) requiere un nuevo pago.
+     */
+    private fun calculateTotalCost(segments: List<RouteSegment>): Double {
+        return segments.sumOf { segment ->
+            getFareForLine(segment.line.id)
+        }
+    }
 
     // Simplificación: 3 minutos por estación, 10 minutos por transbordo
     private fun calculateTime(stations: Int, transfers: Int): Int {
@@ -61,58 +83,53 @@ class RouteFinder(private val repository: OfflineRepository) {
         // --- Caso 1: Misma Línea (El más fácil) ---
         if (origin.lineId == destination.lineId) {
             val segment = createSegment(origin, destination) ?: return null
+            val segments = listOf(segment) // Lista de segmentos
+
             return RouteResult(
-                segments = listOf(segment),
-                totalTimeEstimate = calculateTime(segment.stationsInSegment.size - 1, 0)
+                segments = segments,
+                totalTimeEstimate = calculateTime(segment.stationsInSegment.size - 1, 0),
+                totalCost = calculateTotalCost(segments) // ¡Coste añadido!
             )
         }
 
         // --- Caso 2: Diferente Línea (Requiere Transbordo) ---
-        // Algoritmo simplificado: buscar un solo transbordo.
-
         val originLineStations = repository.getStationsByLineList(origin.lineId)
         val destinationLineStations = repository.getStationsByLineList(destination.lineId)
 
-        // Encontrar puntos de conexión en la línea de ORIGEN que conecten con la línea de DESTINO
         val originConnections = originLineStations.filter { station ->
             transferPoints.containsKey(station.name) &&
                     transferPoints[station.name]!!.contains(destination.lineId)
         }
 
         if (originConnections.isEmpty()) {
-            // No se encontró ruta con 1 transbordo
             return null
         }
 
-        // Por ahora, tomamos la primera conexión encontrada (simplificación)
         val transferStationOnOriginLine = originConnections.first()
-
-        // Buscar la estación correspondiente en la línea de DESTINO
-        // (La estación con el mismo nombre en la otra línea)
         val transferStationOnDestinationLine = destinationLineStations.find {
             it.name == transferStationOnOriginLine.name
-        } ?: return null // Error de datos, la conexión no existe en la otra línea
+        } ?: return null
 
-        // Crear los dos segmentos de la ruta
         val segment1 = createSegment(origin, transferStationOnOriginLine) ?: return null
         val segment2 = createSegment(transferStationOnDestinationLine, destination) ?: return null
 
         val line2 = repository.getLineById(segment2.line.id) ?: return null
 
-        // Agregar mensaje de transbordo al primer segmento
         val segment1WithTransferMessage = segment1.copy(
             transferMessage = "Transbordo en ${transferStationOnOriginLine.name} a la ${line2.name}"
         )
 
         val segments = listOf(segment1WithTransferMessage, segment2)
-
-        // Calculamos tiempo total (estaciones en seg 1 + estaciones in seg 2 + 1 transbordo)
         val totalTime = calculateTime(
             (segment1.stationsInSegment.size -1) + (segment2.stationsInSegment.size - 1),
             1 // 1 transbordo
         )
 
-        return RouteResult(segments = segments, totalTimeEstimate = totalTime)
+        return RouteResult(
+            segments = segments,
+            totalTimeEstimate = totalTime,
+            totalCost = calculateTotalCost(segments) // ¡Coste añadido!
+        )
     }
 
     /**
@@ -125,8 +142,6 @@ class RouteFinder(private val repository: OfflineRepository) {
         val startIndex = lineStations.indexOfFirst { it.id == start.id }
         val endIndex = lineStations.indexOfFirst { it.id == end.id }
 
-        // Maneja si el viaje es "hacia adelante" (index 1 -> 5)
-        // o "hacia atrás" (index 5 -> 1)
         val stationsInSegment = if (startIndex < endIndex) {
             lineStations.subList(startIndex, endIndex + 1)
         } else {
