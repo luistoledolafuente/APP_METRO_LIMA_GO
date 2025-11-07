@@ -50,12 +50,20 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.tecsup.metrolimago.viewmodel.MainViewModel
 
+// --- NUEVAS IMPORTACIONES PARA LA IMAGEN AUTOMÁTICA ---
+import coil.compose.AsyncImage
+import com.tecsup.metrolimago.BuildConfig
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.tecsup.metrolimago.R
+// --- FIN DE NUEVAS IMPORTACIONES ---
+
 // (Centro de Lima - Fallback)
 private val limaCenter = LatLng(-12.046374, -77.042793)
 
 /**
  * Pantalla que muestra el detalle de una estación (Req 2).
- * ¡ACTUALIZADA CON BOTÓN DE FAVORITOS!
+ * ¡ACTUALIZADA CON BOTÓN DE FAVORITOS E IMAGEN AUTOMÁTICA!
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,7 +115,7 @@ fun StationDetailScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
                     }
                 },
-                // --- 2. AÑADIR EL BOTÓN DE ACCIÓN (ESTRELLA) ---
+                // --- Botón de Acción (Estrella) ---
                 actions = {
                     // Solo mostramos el botón si la estación ha cargado
                     if (station != null) {
@@ -157,7 +165,35 @@ fun StationDetailScreen(
                     )
                 }
 
-                // --- 2. Tarjeta de Información (Contenido) ---
+                // --- 2. IMAGEN AUTOMÁTICA DE STREET VIEW ---
+
+                // Obtenemos la API Key desde el BuildConfig
+                val apiKey = BuildConfig.MAPS_API_KEY
+
+                // Construimos la URL de Street View
+                val imageUrl = "https://maps.googleapis.com/maps/api/streetview?" +
+                        "size=600x400" + // Tamaño de la imagen
+                        "&location=${station.latitude},${station.longitude}" + // Coordenadas
+                        "&pitch=-20" + // Un pequeño ángulo hacia abajo
+                        "&key=$apiKey"
+
+                // Usamos AsyncImage de Coil para cargar la URL
+                AsyncImage(
+                    model = imageUrl, // La URL que acabamos de construir
+                    contentDescription = "Foto de la estación ${station.name}",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentScale = ContentScale.Crop, // Rellena el espacio
+
+                    // Imagen que se muestra mientras carga (fondo de tu ícono)
+                    placeholder = painterResource(id = R.drawable.ic_launcher_background),
+
+                    // Imagen que se muestra si falla (ej. sin internet o sin foto)
+                    error = painterResource(id = R.drawable.ic_launcher_background)
+                )
+
+                // --- 3. Tarjeta de Información (Contenido) ---
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("Información", style = MaterialTheme.typography.titleLarge)
                     Spacer(modifier = Modifier.height(8.dp))

@@ -21,13 +21,15 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // --- CÓDIGO PARA LA CLAVE DE API ---
-        // Ahora 'Properties' y 'FileInputStream' serán reconocidos
         val properties = Properties()
         val localPropertiesFile = rootProject.file("local.properties")
         if (localPropertiesFile.exists()) {
             properties.load(FileInputStream(localPropertiesFile))
         }
         val mapsApiKey = properties.getProperty("MAPS_API_KEY", "")
+
+        // Esta línea CREA el archivo BuildConfig
+        buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
 
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
         // --- FIN CÓDIGO API ---
@@ -51,10 +53,11 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true // <-- ¡AQUÍ ESTÁ EL ARREGLO DE LA TERMINAL!
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.11" // Compatible con Kotlin 1.9.23
-    }
+
+    // --- ¡¡AQUÍ ESTÁ EL ARREGLO IMPORTANTE!! ---
+    // El bloque 'composeOptions' que causaba el conflicto ha sido ELIMINADO.
 }
 
 dependencies {
@@ -66,6 +69,7 @@ dependencies {
 
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.0")
+    implementation("io.coil-kt:coil-compose:2.6.0") // Para las imágenes
 
     // Esta librería provee los temas XML base de Material 3 (ej. Theme.Material3.DayNight)
     implementation("com.google.android.material:material:1.12.0")
@@ -105,4 +109,3 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
-
