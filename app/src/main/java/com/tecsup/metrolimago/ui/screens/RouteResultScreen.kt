@@ -1,6 +1,5 @@
 package com.tecsup.metrolimago.ui.screens // Asegúrate que coincida con tu paquete
 
-// --- IMPORTS CORREGIDOS ---
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,19 +21,24 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.DirectionsWalk
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.LocationOn
-// --- ¡NUEVO IMPORT DE ICONO! ---
 import androidx.compose.material.icons.outlined.MonetizationOn
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material.icons.outlined.Train
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -62,8 +66,18 @@ import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.tecsup.metrolimago.logic.RouteSegment
 import com.tecsup.metrolimago.viewmodel.MainViewModel
-// --- FIN DE IMPORTS ---
 
+private val limaCenter = LatLng(-12.046374, -77.042793)
+private val mapUiSettings = MapUiSettings(
+    zoomControlsEnabled = false,
+    myLocationButtonEnabled = true
+)
+
+/**
+ * Pantalla que muestra el resultado de la ruta calculada.
+ * (Corregido el error de 'item' anidado)
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RouteResultScreen(
     viewModel: MainViewModel,
@@ -71,6 +85,7 @@ fun RouteResultScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val route = uiState.calculatedRoute
+    val isFavorite = uiState.isCurrentRouteFavorite != null
 
     route?.let { validRoute ->
 
@@ -90,88 +105,115 @@ fun RouteResultScreen(
             }
         }
 
-        Box(modifier = Modifier.fillMaxSize()) {
-            GoogleMap(
-                modifier = Modifier.fillMaxSize(),
-                cameraPositionState = cameraPositionState,
-                uiSettings = MapUiSettings(zoomControlsEnabled = false, myLocationButtonEnabled = true),
-                properties = MapProperties(isMyLocationEnabled = true)
-            ) {
-                // ... (Marcadores y Polylines sin cambios)
-                validRoute.segments.firstOrNull()?.startStation?.let {
-                    Marker(
-                        state = MarkerState(position = LatLng(it.latitude, it.longitude)),
-                        title = "Origen: ${it.name}",
-                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
-                    )
-                }
-                validRoute.segments.lastOrNull()?.endStation?.let {
-                    Marker(
-                        state = MarkerState(position = LatLng(it.latitude, it.longitude)),
-                        title = "Destino: ${it.name}",
-                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
-                    )
-                }
-                validRoute.segments.forEach { segment ->
-                    Polyline(
-                        points = segment.stationsInSegment.map { LatLng(it.latitude, it.longitude) },
-                        color = segment.line.color,
-                        width = 12f
-                    )
-                }
+        Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = { Text("Tu Ruta") },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                        actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    actions = {
+                        IconButton(onClick = { viewModel.toggleCurrentRouteFavorite() }) {
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                                contentDescription = "Guardar Ruta Favorita"
+                            )
+                        }
+                    }
+                )
             }
+        ) { innerPadding ->
 
-            IconButton(
-                onClick = onNavigateBack,
+            Box(
                 modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(16.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f))
+                    .fillMaxSize()
+                    .padding(innerPadding)
             ) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
-            }
+                GoogleMap(
+                    modifier = Modifier.fillMaxSize(),
+                    cameraPositionState = cameraPositionState,
+                    uiSettings = mapUiSettings,
+                    properties = MapProperties(isMyLocationEnabled = true)
+                ) {
+                    validRoute.segments.firstOrNull()?.startStation?.let {
+                        Marker(
+                            state = MarkerState(position = LatLng(it.latitude, it.longitude)),
+                            title = "Origen: ${it.name}",
+                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
+                        )
+                    }
+                    validRoute.segments.lastOrNull()?.endStation?.let {
+                        Marker(
+                            state = MarkerState(position = LatLng(it.latitude, it.longitude)),
+                            title = "Destino: ${it.name}",
+                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+                        )
+                    }
+                    validRoute.segments.forEach { segment ->
+                        Polyline(
+                            points = segment.stationsInSegment.map { LatLng(it.latitude, it.longitude) },
+                            color = segment.line.color,
+                            width = 12f
+                        )
+                    }
+                }
 
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .fillMaxSize(0.6f),
-                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                shadowElevation = 8.dp,
-                color = MaterialTheme.colorScheme.surface
-            ) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    Box(
-                        modifier = Modifier
-                            .padding(vertical = 8.dp)
-                            .width(40.dp)
-                            .height(4.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
-                            .align(Alignment.CenterHorizontally)
-                    )
+                // (El botón flotante de 'Atrás' fue reemplazado por la TopAppBar)
 
-                    // --- ¡TARJETA ACTUALIZADA CON COSTO! ---
-                    RouteSummaryCard(
-                        time = validRoute.totalTimeEstimate,
-                        cost = validRoute.totalCost, // <-- Pasamos el costo
-                        origin = validRoute.segments.firstOrNull()?.startStation?.name ?: "N/A",
-                        destination = validRoute.segments.lastOrNull()?.endStation?.name ?: "N/A"
-                    )
+                Surface(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .fillMaxSize(0.6f),
+                    shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                    shadowElevation = 8.dp,
+                    color = MaterialTheme.colorScheme.surface
+                ) {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Box( // Handle
+                            modifier = Modifier
+                                .padding(vertical = 8.dp)
+                                .width(40.dp)
+                                .height(4.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                                .align(Alignment.CenterHorizontally)
+                        )
 
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                    )
+                        RouteSummaryCard(
+                            time = validRoute.totalTimeEstimate,
+                            cost = validRoute.totalCost,
+                            origin = validRoute.segments.firstOrNull()?.startStation?.name ?: "N/A",
+                            destination = validRoute.segments.lastOrNull()?.endStation?.name ?: "N/A"
+                        )
 
-                    LazyColumn(
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    ) {
-                        itemsIndexed(validRoute.segments) { index, segment ->
-                            RouteSegmentItem(segment = segment)
-                            segment.transferMessage?.let {
-                                TransferItem(message = it)
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                        )
+
+                        // Lista de detalles
+                        LazyColumn(
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        ) {
+                            itemsIndexed(validRoute.segments) { index, segment ->
+                                // Composable 1
+                                RouteSegmentItem(segment = segment)
+
+                                // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
+                                // Composable 2 (llamado directamente, sin 'item')
+                                segment.transferMessage?.let {
+                                    TransferItem(message = it)
+                                }
+                                // --- FIN DE LA CORRECCIÓN ---
                             }
                         }
                     }
@@ -181,17 +223,17 @@ fun RouteResultScreen(
     }
 }
 
-// --- RouteSummaryCard (¡ACTUALIZADA!) ---
+// --- (El resto de los Composables [RouteSummaryCard, RouteSegmentItem, TransferItem]
+// ---  se quedan exactamente igual que en el archivo anterior) ---
+
 @Composable
 fun RouteSummaryCard(
     time: Int,
-    cost: Double, // <-- Nuevo parámetro
+    cost: Double,
     origin: String,
     destination: String
 ) {
-    // Formateamos el costo a "S/ X.XX"
     val costString = String.format("S/ %.2f", cost)
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -207,9 +249,8 @@ fun RouteSummaryCard(
                 .fillMaxWidth()
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween // Distribuir espacio
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // --- Columna de Tiempo ---
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Outlined.AccessTime,
@@ -231,13 +272,11 @@ fun RouteSummaryCard(
                     )
                 }
             }
-
-            // --- ¡NUEVA COLUMNA DE COSTO! ---
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Outlined.MonetizationOn,
                     contentDescription = "Costo",
-                    tint = MaterialTheme.colorScheme.primary, // O usa un color verde
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(28.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
@@ -258,15 +297,12 @@ fun RouteSummaryCard(
     }
 }
 
-
-// --- RouteSegmentItem (Sin cambios) ---
 @Composable
 fun RouteSegmentItem(
     segment: RouteSegment
 ) {
     var isExpanded by remember { mutableStateOf(false) }
     val stationCount = segment.stationsInSegment.size
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -352,8 +388,6 @@ fun RouteSegmentItem(
     }
 }
 
-
-// --- TransferItem (CORREGIDO) ---
 @Composable
 fun TransferItem(
     message: String
@@ -370,9 +404,7 @@ fun TransferItem(
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(32.dp)
         )
-
         Spacer(modifier = Modifier.width(20.dp))
-
         Column {
             Text(
                 text = "Transbordo",

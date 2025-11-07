@@ -20,7 +20,7 @@ import com.tecsup.metrolimago.viewmodel.MainViewModel
 
 /**
  * Define las rutas de navegación de forma segura (type-safe).
- * (Sin cambios)
+ * (Incluye Splash, Favorites, Settings, etc.)
  */
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
@@ -43,7 +43,7 @@ sealed class Screen(val route: String) {
 
 /**
  * El "NavHost" principal de la aplicación.
- * ¡ACTUALIZADO CON LA CORRECCIÓN DEL ERROR!
+ * ¡ACTUALIZADO CON TODAS LAS CORRECCIONES!
  */
 @Composable
 fun AppNavigation(
@@ -81,8 +81,8 @@ fun AppNavigation(
                 onStationClicked = { stationId ->
                     navController.navigate(Screen.StationDetail.createRoute(stationId))
                 },
-                onViewAllLines = { /* Redundante */ },
-                onViewAllStations = { /* Redundante */ },
+                onViewAllLines = { /* Redundante, manejado por BottomNav */ },
+                onViewAllStations = { /* Redundante, manejado por BottomNav */ },
                 onNavigateToSettings = {
                     navController.navigate(Screen.Settings.route)
                 }
@@ -95,6 +95,9 @@ fun AppNavigation(
                 viewModel = viewModel,
                 onStationClicked = { stationId ->
                     navController.navigate(Screen.StationDetail.createRoute(stationId))
+                },
+                onRouteClicked = {
+                    navController.navigate(Screen.RouteResult.route)
                 }
             )
         }
@@ -114,7 +117,7 @@ fun AppNavigation(
         composable(Screen.AllLines.route) {
             AllLinesScreen(
                 viewModel = viewModel,
-                onNavigateBack = { navController.popBackStack() },
+                onNavigateBack = { navController.popBackStack() }, // <-- Corregido el typo
                 onLineClicked = { lineId ->
                     viewModel.clearSelectedLine()
                     navController.navigate(Screen.LineDetail.createRoute(lineId))
@@ -133,8 +136,7 @@ fun AppNavigation(
             )
         }
 
-        // --- El resto de pantallas (LineDetail, RoutePlanner, etc.) ---
-
+        // --- Pantalla de Detalle de Línea ---
         composable(
             route = Screen.LineDetail.route,
             arguments = listOf(navArgument("lineId") { type = NavType.StringType })
@@ -157,6 +159,7 @@ fun AppNavigation(
             }
         }
 
+        // --- Pantalla de Planificar Ruta ---
         composable(Screen.RoutePlanner.route) {
             RoutePlannerScreen(
                 viewModel = viewModel,
@@ -170,6 +173,7 @@ fun AppNavigation(
             )
         }
 
+        // --- Pantalla de Resultado de Ruta ---
         composable(Screen.RouteResult.route) {
             RouteResultScreen(
                 viewModel = viewModel,
@@ -180,6 +184,7 @@ fun AppNavigation(
             )
         }
 
+        // --- Pantalla de Detalle de Estación ---
         composable(
             route = Screen.StationDetail.route,
             arguments = listOf(navArgument("stationId") { type = NavType.StringType })

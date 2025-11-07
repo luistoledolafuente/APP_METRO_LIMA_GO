@@ -1,6 +1,7 @@
 package com.tecsup.metrolimago.data.database // Asegúrate que coincida con tu paquete
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -24,7 +25,7 @@ interface LineDao {
 
 /**
  * Data Access Object para las Estaciones
- * (¡ACTUALIZADO CON FUNCIONES DE FAVORITOS!)
+ * (Sin cambios)
  */
 @Dao
 interface StationDao {
@@ -46,17 +47,42 @@ interface StationDao {
     @Query("SELECT * FROM stations WHERE id = :stationId")
     suspend fun getStationById(stationId: String): StationEntity?
 
-    // --- ¡NUEVA FUNCIÓN AÑADIDA! ---
-    /**
-     * Actualiza el estado de 'favorito' de una estación.
-     */
     @Query("UPDATE stations SET isFavorite = :isFavorite WHERE id = :stationId")
     suspend fun updateFavoriteStatus(stationId: String, isFavorite: Boolean)
 
-    // --- ¡NUEVA FUNCIÓN AÑADIDA! ---
-    /**
-     * Obtiene solo las estaciones marcadas como favoritas.
-     */
     @Query("SELECT * FROM stations WHERE isFavorite = 1 ORDER BY name ASC")
     fun getFavoriteStations(): Flow<List<StationEntity>>
+}
+
+// --- ¡NUEVO DAO AÑADIDO! ---
+/**
+ * Data Access Object para las Rutas Favoritas
+ */
+@Dao
+interface FavoriteRouteDao {
+    /**
+     * Inserta una nueva ruta favorita.
+     * 'OnConflictStrategy.IGNORE' evita que se inserte una ruta duplicada.
+     */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(route: FavoriteRouteEntity)
+
+    /**
+     * Borra una ruta favorita (basado en el objeto 'route' que nos da la UI).
+     */
+    @Delete
+    suspend fun delete(route: FavoriteRouteEntity)
+
+    /**
+     * Obtiene un Flow de todas las rutas favoritas.
+     */
+    @Query("SELECT * FROM favorite_routes ORDER BY id DESC")
+    fun getFavoriteRoutes(): Flow<List<FavoriteRouteEntity>>
+
+    /**
+     * (Función futura)
+     * Comprueba si una ruta específica ya existe.
+     */
+    @Query("SELECT * FROM favorite_routes WHERE originStationId = :originId AND destinationStationId = :destinationId LIMIT 1")
+    suspend fun findFavoriteRoute(originId: String, destinationId: String): FavoriteRouteEntity?
 }

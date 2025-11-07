@@ -1,97 +1,114 @@
 <resources>
     <string name="app_name">MetroLimaGo</string>
 
-    <!-- Bottom Navigation Bar -->
-    <string name="bottom_nav_home">Home</string>
-    <string name="bottom_nav_favorites">Favorites</string>
-    <string name="bottom_nav_lines">Lines</string>
-    <string name="bottom_nav_stations">Stations</string>
-    <string name="bottom_nav_settings">Settings</string>
+    <string name="general_back_button">Regresar</string>
 
-    <!-- Screen: Home -->
-    <string name="home_search_greeting">Hello, Carlos</string>
-    <string name="home_search_prompt">Where are we going?</string>
-    <string name="home_search_icon_desc">Search</string>
-    <string name="home_settings_icon_desc">Settings</string>
-    <string name="permission_denied_title">Location Permission Required</string>
-    <string name="permission_denied_body">To show the map and your location, we need you to grant permission.</string>
-    <string name="permission_grant_button">Grant Permission</string>
-    <string name="permission_open_settings_button">Open Settings</string>
+    <string name="bottom_nav_home">Inicio</string>
+    <string name="bottom_nav_favorites">Favoritos</string>
+    <string name="bottom_nav_lines">Líneas</string>
+    <string name="bottom_nav_stations">Estaciones</string>
+    <string name="bottom_nav_settings">Ajustes</string>
 
-    <!-- Screen: Favorites -->
-    <string name="favorites_title">My Favorite Stations</string>
-    <string name="favorites_empty_state">You haven\'t added any favorites yet.\nPress the star (★) on a station\'s detail screen to save it here.</string>
+    <string name="home_search_greeting">Hola, Carlos</string>
+    <string name="home_search_prompt">¿A dónde vamos?</string>
+    <string name="home_search_icon_desc">Buscar</string>
+    <string name="home_settings_icon_desc">Ajustes</string>
+    <string name="permission_denied_title">Permiso de Ubicación Requerido</string>
+    <string name="permission_denied_body">Para mostrar el mapa y tu ubicación, necesitamos que nos des permiso.</string>
+    <string name="permission_grant_button">Conceder Permiso</string>
+    <string name="permission_open_settings_button">Abrir Configuración</string>
 
-    <!-- Screens: Lists (Lines & Stations) -->
-    <string name="all_lines_title">All Lines</string>
-    <string name="all_lines_back_button">Back</string>
-    <string name="line_header_icon_desc">Line</string>
-    <string name="all_stations_title">All Stations</string>
-    <string name="all_stations_search_placeholder">Search station…</string>
-    <string name="all_stations_search_icon_desc">Search</string>
-    <string name="station_list_item_icon_desc">Station</string>
-    <string name="station_list_item_line_prefix">Line %1$s</string> <!-- e.g. "Line 1" -->
+    <string name="favorites_title">Mis Favoritos</string>
+    <string name="favorites_routes_title">Rutas Favoritas</string>
+    <string name="favorites_stations_title">Estaciones Favoritas</string>
+    <string name="favorites_routes_empty">Aún no has guardado rutas. Presiona la estrella (★) en la pantalla de resultados de una ruta.</string>
+    <string name="favorites_stations_empty">Aún no has añadido estaciones. Presiona la estrella (★) en el detalle de una estación.</string>
+    <string name="favorites_route_item_from">De: %1$s</string>
+    <string name="favorites_route_item_to">A: %1$s</string>
+    <string name="favorites_route_item_delete">Borrar</string>
 
-    <!-- Screen: Station Detail -->
-    <string name="station_detail_loading">Loading…</string>
-    <string name="station_detail_back_button">Back</string>
-    <string name="station_detail_favorite_button">Mark as Favorite</string>
-    <string name="station_detail_image_desc">Photo of %1$s station</string>
-    <string name="station_detail_info_title">Information</string>
-    <string name="station_detail_info_status">Status</string>
-    <string name="station_detail_info_schedule">Schedule</string>
-    <string name="station_detail_info_line">Line</string>
+    <string name="all_lines_title">Todas las Líneas</string>
+    <string name="all_lines_back_button">Regresar</string>
+    <string name="line_header_icon_desc">Línea</string>
+    <string name="all_stations_title">Todas las Estaciones</string>
+    <string name="all_stations_search_placeholder">Buscar estación…</string>
+    <string name="all_stations_search_icon_desc">Buscar</string>
+    <string name="station_list_item_icon_desc">Estación</string>
+    <string name="station_list_item_line_prefix">Línea %1$s</string> <string name="station_detail_loading">Cargando…</string>
+    <string name="station_detail_back_button">Regresar</string>
+    <string name="station_detail_favorite_button">Marcar como Favorito</string>
+    <string name="station_detail_info_title">Información</string>
+    <string name="station_detail_info_status">Estado</string>
+    <string name="station_detail_info_schedule">Horario</string>
+    <string name="station_detail_info_line">Línea</string>
 
-    <!-- Screen: Line Detail -->
-    <string name="line_detail_stations_title">Stations</string>
+    <string name="settings_title">Ajustes e Información</string>
+    <string name="settings_tab_settings">Ajustes</string>
+    <string name="settings_tab_info">Información</string>
 
-    <!-- Screen: Settings -->
-    <string name="settings_title">Settings &amp; Info</string>
-    <string name="settings_info_title">Information</string>
-    <string name="settings_info_card_1_title">Fares and Payment Methods</string>
-    <string name="settings_info_card_1_body">The general fare for Line 1 and Line 2 is S/ 1.50. The Metropolitano is S/ 3.20.</string>
-    <string name="settings_info_card_2_title">Important Notices (Mock)</string>
-    <string name="settings_info_card_2_body">• (TODAY) Service restricted at Estación Central due to an event.\n• Sunday: Special schedule from 06:00 to 21:00.</string>
-    <string name="settings_info_card_3_title">Safety Tips</string>
-    <string name="settings_info_card_3_body">• Watch your belongings at all times.\n• Avoid using your phone near the doors.</string>
-    <string name="settings_app_settings_title">App Settings</string>
-    <string name="settings_appearance_title">Appearance</string>
-    <string name="settings_theme_light">Light</string>
-    <string name="settings_theme_dark">Dark</string>
-    <string name="settings_theme_system">System</string>
-    <string name="settings_language_title">Language</string>
-    <string name="settings_language_es">Español</string>
-    <string name="settings_language_en">English</string>
-    <string name="settings_version_title">Version</string>
+    <string name="settings_info_notices_title">Avisos y Recomendaciones</string>
+    <string name="settings_info_notices_body">
+        • (AVISO) Servicio restringido en Estación Central (Simulación).\n
+        • Planifica tu ruta antes de salir de casa.\n
+        • Recarga tu tarjeta con anticipación para evitar colas.\n
+        • Cede el asiento a quien lo necesite (adultos mayores, embarazadas, etc.).
+    </string>
+    <string name="settings_info_security_title">Consejos de Seguridad</string>
+    <string name="settings_info_security_body">
+        • Mantén tus pertenencias (móvil, billetera) en un lugar seguro y a la vista, preferiblemente en bolsillos delanteros.\n
+        • Evita llevar objetos de valor a la vista.\n
+        • En horas punta, sujeta bien tu mochila o cartera por delante.\n
+        • No aceptes ayuda de extraños en los cajeros o máquinas de recarga.\n
+        • Respeta la línea amarilla y espera el tren detrás de ella.
+    </string>
+
+    <string name="settings_app_settings_title">Ajustes de la App</string>
+    <string name="settings_appearance_title">Apariencia</string>
+    <string name="settings_theme_light">Claro</string>
+    <string name="settings_theme_dark">Oscuro</string>
+    <string name="settings_theme_system">Sistema</string>
+    <string name="settings_theme_system_desc">Usar el ajuste del teléfono</string>
+    <string name="settings_theme_light_desc">Usar siempre el modo claro</string>
+    <string name="settings_theme_dark_desc">Usar siempre el modo oscuro</string>
+    <string name="settings_language">Idioma</string>
+    <string name="settings_language_app">Idioma de la aplicación</string>
+    <string name="settings_language_current_es">Español</string>
+    <string name="settings_language_current_en">English</string>
+    <string name="settings_version_title">Versión</string>
     <string name="settings_version_body">1.0.0 (Beta)</string>
 
-    <!-- Screen: Route Planner -->
-    <string name="planner_title">Plan Route</string>
-    <string name="planner_card_title">Select your trip</string>
-    <string name="planner_origin_label">Origin Station</string>
-    <string name="planner_destination_label">Destination Station</string>
-    <string name="planner_swap_button_desc">Swap Origin/Destination</string>
-    <string name="planner_select_station">Select station</string>
-    <string name="planner_expand_button_desc">Expand</string>
-    <string name="planner_calculate_button">Calculate Route</string>
-    <string name="planner_bottom_sheet_title">Select Station</string>
-    <string name="planner_error_no_selection">Select origin and destination</string>
-    <string name="planner_error_same_station">Origin and destination cannot be the same</string>
+    <string name="planner_title">Planificar Ruta</string>
+    <string name="planner_card_title">Selecciona tu viaje</string>
+    <string name="planner_origin_label">Estación de Origen</string>
+    <string name="planner_destination_label">Estación de Destino</string>
+    <string name="planner_swap_button_desc">Intercambiar Origen/Destino</string>
+    <string name="planner_select_station">Seleccionar estación</string>
+    <string name="planner_expand_button_desc">Expandir</string>
+    <string name="planner_calculate_button">Calcular Ruta</string>
+    <string name="planner_bottom_sheet_title">Seleccionar Estación</string>
+    <string name="planner_error_no_selection">Selecciona origen y destino</string>
+    <string name="planner_error_same_station">El origen y destino no pueden ser iguales</string>
 
-    <!-- Screen: Route Result -->
-    <string name="route_result_origin_marker">Origin: %1$s</string>
-    <string name="route_result_destination_marker">Destination: %1$s</string>
-    <string name="route_result_back_button">Back</string>
-    <string name="route_result_summary_time">Time</string>
-    <string name="route_result_summary_from">From %1$s</string>
-    <string name="route_result_summary_destination_icon">Destination</string>
-    <string name="route_result_segment_stations">%1$d stations</string>
-    <string name="route_result_segment_final_station">Final station</string>
-    <string name="route_result_segment_disembark">Get off at: %1$s</string>
-    <string name="route_result_segment_show_stops">Show %1$d stops</string>
-    <string name="route_result_segment_hide_stops">Hide stops</string>
-    <string name="route_result_transfer_title">Transfer</string>
-    <string name="route_result_transfer_icon_desc">Transfer</string>
-    <string name="route_result_transfer_message">Transfer at %1$s to %2$s</string>
+    <string name="route_result_title">Tu Ruta</string>
+    <string name="route_result_save_route">Guardar Ruta Favorita</string>
+    <string name="route_result_origin_marker">Origen: %1$s</string>
+    <string name="route_result_destination_marker">Destino: %1$s</string>
+    <string name="route_result_summary_time">Tiempo</string>
+    <string name="route_result_summary_cost">Costo</string>
+    <string name="route_result_summary_cost_estimated">Estimado</string>
+    <string name="route_result_summary_from">Desde %1$s</string>
+    <string name="route_result_summary_destination_icon">Destino</string>
+    <string name="route_result_segment_stations">%1$d estaciones</string>
+    <string name="route_result_segment_final_station">Estación final</string>
+    <string name="route_result_segment_disembark">Bajar en: %1$s</string>
+    <string name="route_result_segment_show_stops">Ver %1$d paraderos</string>
+    <string name="route_result_segment_hide_stops">Ocultar paraderos</string>
+    <string name="route_result_transfer_title">Transbordo</string>
+    <string name="route_result_transfer_icon_desc">Transbordo</string>
+    <string name="route_result_transfer_message">Caminar a %1$s para %2$s</string>
+
+    <string name="language_screen_title">Seleccionar Idioma</string>
+    <string name="language_es">Español</string>
+    <string name="language_en">English (Inglés)</string>
 
 </resources>

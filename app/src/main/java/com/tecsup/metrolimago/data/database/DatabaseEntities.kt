@@ -2,6 +2,7 @@ package com.tecsup.metrolimago.data.database // Asegúrate que coincida con tu p
 
 import androidx.compose.ui.graphics.Color
 import androidx.room.Entity
+import androidx.room.ForeignKey // <-- IMPORTANTE
 import androidx.room.PrimaryKey
 import com.tecsup.metrolimago.ui.theme.Linea1Color
 
@@ -25,10 +26,38 @@ data class StationEntity(
     val status: String = "OPERATIVE",
     val latitude: Double,
     val longitude: Double,
-    // --- ¡CAMBIO AÑADIDO! ---
-    // Por defecto, ninguna estación es favorita.
     val isFavorite: Boolean = false
 )
+
+// --- ¡NUEVA TABLA AÑADIDA! (Req 6.2) ---
+@Entity(
+    tableName = "favorite_routes",
+    // Definimos las "claves foráneas" para que, si se borra una estación,
+    // la ruta favorita asociada también se borre.
+    foreignKeys = [
+        ForeignKey(
+            entity = StationEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["originStationId"],
+            onDelete = ForeignKey.CASCADE // Si se borra la estación, se borra la ruta
+        ),
+        ForeignKey(
+            entity = StationEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["destinationStationId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
+)
+data class FavoriteRouteEntity(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val originStationId: String,
+    val destinationStationId: String,
+    // Guardamos los nombres para mostrarlos rápido en la lista
+    val originName: String,
+    val destinationName: String
+)
+
 
 // --- 2. MODELOS DE DOMINIO (Los que usa la UI) ---
 
@@ -48,8 +77,16 @@ data class Station(
     val status: String,
     val latitude: Double,
     val longitude: Double,
-    // --- ¡CAMBIO AÑADIDO! ---
     val isFavorite: Boolean
+)
+
+// --- ¡NUEVO MODELO AÑADIDO! ---
+data class FavoriteRoute(
+    val id: Int,
+    val originStationId: String,
+    val destinationStationId: String,
+    val originName: String,
+    val destinationName: String
 )
 
 // --- 3. FUNCIONES DE MAPEO ---
@@ -73,7 +110,17 @@ fun StationEntity.toDomainModel(): Station {
         status = this.status,
         latitude = this.latitude,
         longitude = this.longitude,
-        // --- ¡CAMBIO AÑADIDO! ---
         isFavorite = this.isFavorite
+    )
+}
+
+// --- ¡NUEVO MAPPER AÑADIDO! ---
+fun FavoriteRouteEntity.toDomainModel(): FavoriteRoute {
+    return FavoriteRoute(
+        id = this.id,
+        originStationId = this.originStationId,
+        destinationStationId = this.destinationStationId,
+        originName = this.originName,
+        destinationName = this.destinationName
     )
 }
