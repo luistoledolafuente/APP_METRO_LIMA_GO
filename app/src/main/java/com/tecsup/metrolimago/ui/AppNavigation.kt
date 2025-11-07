@@ -1,14 +1,14 @@
 package com.tecsup.metrolimago.ui // Asegúrate que coincida con tu paquete
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavHostController // <-- 1. IMPORTAR ESTO
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-// import androidx.navigation.compose.rememberNavController // <-- 2. YA NO SE USA AQUÍ
 import androidx.navigation.navArgument
 import com.tecsup.metrolimago.ui.screens.AllLinesScreen
 import com.tecsup.metrolimago.ui.screens.AllStationsScreen
+import com.tecsup.metrolimago.ui.screens.FavoritesScreen
 import com.tecsup.metrolimago.ui.screens.HomeScreen
 import com.tecsup.metrolimago.ui.screens.LineDetailScreen
 import com.tecsup.metrolimago.ui.screens.RoutePlannerScreen
@@ -20,7 +20,7 @@ import com.tecsup.metrolimago.viewmodel.MainViewModel
 
 /**
  * Define las rutas de navegación de forma segura (type-safe).
- * (El código de tu compañero se queda igual)
+ * (Sin cambios)
  */
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
@@ -30,6 +30,7 @@ sealed class Screen(val route: String) {
     object AllLines : Screen("all_lines")
     object AllStations : Screen("all_stations")
     object Settings : Screen("settings")
+    object Favorites : Screen("favorites")
 
     object LineDetail : Screen("line_detail/{lineId}") {
         fun createRoute(lineId: String) = "line_detail/$lineId"
@@ -42,17 +43,15 @@ sealed class Screen(val route: String) {
 
 /**
  * El "NavHost" principal de la aplicación.
- * AHORA RECIBE el NavController desde MainActivity.
+ * ¡ACTUALIZADO CON LA CORRECCIÓN DEL ERROR!
  */
 @Composable
 fun AppNavigation(
     viewModel: MainViewModel,
-    navController: NavHostController // <-- 3. ACEPTAR NavController COMO PARÁMETRO
+    navController: NavHostController
 ) {
-    // val navController = rememberNavController() // <-- 4. ELIMINAR ESTA LÍNEA
-
     NavHost(
-        navController = navController, // <-- 5. Usar el parámetro
+        navController = navController,
         startDestination = Screen.Splash.route
     ) {
 
@@ -82,30 +81,36 @@ fun AppNavigation(
                 onStationClicked = { stationId ->
                     navController.navigate(Screen.StationDetail.createRoute(stationId))
                 },
-                // --- 6. SIMPLIFICADO: Estos ya no los necesita el HomeScreen ---
-                onViewAllLines = {
-                    // Esta lógica ahora vive en la Bottom Nav Bar
-                },
-                onViewAllStations = {
-                    // Esta lógica ahora vive en la Bottom Nav Bar
-                },
+                onViewAllLines = { /* Redundante */ },
+                onViewAllStations = { /* Redundante */ },
                 onNavigateToSettings = {
-                    // Esta lógica la podemos pasar al HomeSearchBar
                     navController.navigate(Screen.Settings.route)
                 }
             )
         }
 
-        // --- 4. AÑADIR EL COMPOSABLE DE LA NUEVA PANTALLA ---
+        // --- Pantalla de Favoritos ---
+        composable(Screen.Favorites.route) {
+            FavoritesScreen(
+                viewModel = viewModel,
+                onStationClicked = { stationId ->
+                    navController.navigate(Screen.StationDetail.createRoute(stationId))
+                }
+            )
+        }
+
+        // --- Pantalla de Ajustes (SIMPLIFICADA) ---
+        // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
         composable(Screen.Settings.route) {
             SettingsScreen(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() }
+                // 'onStationClicked' fue eliminado, causando el error. Ahora está corregido.
             )
         }
+        // --- FIN DE LA CORRECCIÓN ---
 
-        // --- (El resto de tus pantallas no cambian) ---
-
+        // --- Pantalla de Todas las Líneas ---
         composable(Screen.AllLines.route) {
             AllLinesScreen(
                 viewModel = viewModel,
@@ -117,6 +122,7 @@ fun AppNavigation(
             )
         }
 
+        // --- Pantalla de Todas las Estaciones ---
         composable(Screen.AllStations.route) {
             AllStationsScreen(
                 viewModel = viewModel,
@@ -126,6 +132,8 @@ fun AppNavigation(
                 }
             )
         }
+
+        // --- El resto de pantallas (LineDetail, RoutePlanner, etc.) ---
 
         composable(
             route = Screen.LineDetail.route,

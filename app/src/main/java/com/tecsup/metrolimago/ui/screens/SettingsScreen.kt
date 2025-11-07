@@ -18,15 +18,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tecsup.metrolimago.viewmodel.MainViewModel
 
-/**
- * Pantalla de Ajustes e Información (Req 5 y 6).
- * Este es el "Menú" que pediste.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    viewModel: MainViewModel, // Lo pasamos para futuros ajustes (ej. idioma)
-    onNavigateBack: () -> Unit
+    viewModel: MainViewModel,
+    onNavigateBack: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -53,7 +49,8 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // --- Sección de Información (Req 5) ---
+            // (La sección de Favoritos ya no está aquí, está en FavoritesScreen)
+
             item {
                 Text("Información", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
@@ -79,9 +76,9 @@ fun SettingsScreen(
                 )
             }
 
-            item { Divider(modifier = Modifier.padding(vertical = 16.dp)) }
+            // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
+            item { HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp)) }
 
-            // --- Sección de Ajustes (Req 6) ---
             item {
                 Text("Ajustes de la App", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
@@ -92,7 +89,6 @@ fun SettingsScreen(
                     subtitle = "Español (Latinoamérica)"
                 )
             }
-            // (Aquí iría un switch para Modo Oscuro, pero lo dejamos simple por ahora)
             item {
                 SettingRow(
                     icon = Icons.Default.Info,
@@ -104,9 +100,7 @@ fun SettingsScreen(
     }
 }
 
-/**
- * Helper para las tarjetas de información (el que te di antes)
- */
+// (InfoCard se queda igual)
 @Composable
 fun InfoCard(icon: ImageVector, title: String, content: String) {
     Card(
@@ -138,9 +132,7 @@ fun InfoCard(icon: ImageVector, title: String, content: String) {
     }
 }
 
-/**
- * Helper para una fila de ajuste (ej. Idioma)
- */
+// (SettingRow se queda igual)
 @Composable
 fun SettingRow(icon: ImageVector, title: String, subtitle: String) {
     Row(

@@ -1,5 +1,6 @@
-package com.tecsup.metrolimago.ui.screens
+package com.tecsup.metrolimago.ui.screens // Asegúrate que coincida con tu paquete
 
+// --- IMPORTS CORREGIDOS ---
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,13 +21,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.DirectionsWalk // <-- CORRECCIÓN DE IMPORT
 import androidx.compose.material.icons.outlined.AccessTime
-import androidx.compose.material.icons.outlined.DirectionsWalk
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Train
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider // <-- CORRECCIÓN DE IMPORT
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -47,9 +48,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory // <-- IMPORT AÑADIDO
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties // <-- IMPORT AÑADIDO
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
@@ -57,11 +60,8 @@ import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.tecsup.metrolimago.logic.RouteSegment
 import com.tecsup.metrolimago.viewmodel.MainViewModel
+// --- FIN DE IMPORTS ---
 
-/**
- * Pantalla que muestra el resultado de la ruta calculada.
- * ¡ACTUALIZADA con lista de paraderos expandible!
- */
 @Composable
 fun RouteResultScreen(
     viewModel: MainViewModel,
@@ -70,8 +70,6 @@ fun RouteResultScreen(
     val uiState by viewModel.uiState.collectAsState()
     val route = uiState.calculatedRoute
 
-    // --- ARREGLO DE SEGURIDAD (Sin cambios) ---
-    // Esto evita el crash si el usuario presiona "atrás"
     route?.let { validRoute ->
 
         val cameraPositionState = rememberCameraPositionState()
@@ -94,25 +92,25 @@ fun RouteResultScreen(
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
-                uiSettings = MapUiSettings(zoomControlsEnabled = false, myLocationButtonEnabled = true)
+                uiSettings = MapUiSettings(zoomControlsEnabled = false, myLocationButtonEnabled = true),
+                properties = MapProperties(isMyLocationEnabled = true) // <-- ARREGLADO
             ) {
-                // Marcador de Origen (Nulo-seguro y sin 'itit')
                 validRoute.segments.firstOrNull()?.startStation?.let {
                     Marker(
                         state = MarkerState(position = LatLng(it.latitude, it.longitude)),
-                        title = "Origen: ${it.name}"
+                        title = "Origen: ${it.name}",
+                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN) // <-- Icono Origen
                     )
                 }
 
-                // Marcador de Destino (Nulo-seguro y sin 'itit')
                 validRoute.segments.lastOrNull()?.endStation?.let {
                     Marker(
                         state = MarkerState(position = LatLng(it.latitude, it.longitude)),
-                        title = "Destino: ${it.name}"
+                        title = "Destino: ${it.name}",
+                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED) // <-- Icono Destino
                     )
                 }
 
-                // Polilíneas
                 validRoute.segments.forEach { segment ->
                     Polyline(
                         points = segment.stationsInSegment.map { LatLng(it.latitude, it.longitude) },
@@ -122,7 +120,6 @@ fun RouteResultScreen(
                 }
             }
 
-            // Botón de Regresar
             IconButton(
                 onClick = onNavigateBack,
                 modifier = Modifier
@@ -134,7 +131,6 @@ fun RouteResultScreen(
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
             }
 
-            // Panel Inferior
             Surface(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -145,7 +141,7 @@ fun RouteResultScreen(
                 color = MaterialTheme.colorScheme.surface
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    Box( // Handle
+                    Box(
                         modifier = Modifier
                             .padding(vertical = 8.dp)
                             .width(40.dp)
@@ -155,27 +151,23 @@ fun RouteResultScreen(
                             .align(Alignment.CenterHorizontally)
                     )
 
-                    // Tarjeta de Resumen (Nulo-seguro)
                     RouteSummaryCard(
                         time = validRoute.totalTimeEstimate,
                         origin = validRoute.segments.firstOrNull()?.startStation?.name ?: "N/A",
                         destination = validRoute.segments.lastOrNull()?.endStation?.name ?: "N/A"
                     )
 
-                    Divider(
+                    // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
+                    HorizontalDivider(
                         modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
                         color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                     )
 
-                    // Lista de detalles
                     LazyColumn(
                         modifier = Modifier.padding(horizontal = 16.dp)
                     ) {
                         itemsIndexed(validRoute.segments) { index, segment ->
-                            // --- ¡ESTE ES EL ÚNICO CAMBIO! ---
-                            // Ahora usamos el 'RouteSegmentItem' actualizado
                             RouteSegmentItem(segment = segment)
-
                             segment.transferMessage?.let {
                                 TransferItem(message = it)
                             }
@@ -240,37 +232,28 @@ fun RouteSummaryCard(
 }
 
 
-// --- ¡¡¡ESTE ES EL COMPOSABLE ACTUALIZADO!!! ---
-/**
- * Un item en la lista de pasos (ej. "Línea 1, 7 estaciones...")
- * AHORA ES EXPANDIBLE para mostrar los paraderos.
- */
+// --- RouteSegmentItem (Sin cambios) ---
 @Composable
 fun RouteSegmentItem(
     segment: RouteSegment
 ) {
-    // 1. Estado para saber si la lista está expandida o no
     var isExpanded by remember { mutableStateOf(false) }
-
-    // 2. Contamos las estaciones. El dato viene de RouteFinder
     val stationCount = segment.stationsInSegment.size
 
-    // 3. Columna principal que contiene todo
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 12.dp)
     ) {
-        // Fila principal (Icono, Nombre de línea, etc.)
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Box( // Icono
+            Box(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(segment.line.color), // Usa el color de la línea
+                    .background(segment.line.color),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -280,17 +263,14 @@ fun RouteSegmentItem(
                     modifier = Modifier.size(24.dp)
                 )
             }
-
             Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) { // Textos
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = segment.line.name,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    // Texto actualizado: "7 estaciones" en lugar de "6 paradas"
                     text = if (stationCount > 1) "$stationCount estaciones" else "Estación final",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -301,36 +281,30 @@ fun RouteSegmentItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        } // Fin de Row principal
-
-        // --- 4. PARTE NUEVA: El botón "Ver/Ocultar paraderos" ---
-        if (stationCount > 1) { // Solo mostrar si hay más de 1 estación
+        }
+        if (stationCount > 1) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = if (isExpanded) "Ocultar paraderos" else "Ver $stationCount paraderos",
                 color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.bodyMedium, // Un poco más grande
+                style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
-                    .padding(start = 56.dp) // Alineado con el texto (40dp icono + 16dp spacer)
-                    .clickable { isExpanded = !isExpanded } // Cambia el estado al hacer clic
+                    .padding(start = 56.dp)
+                    .clickable { isExpanded = !isExpanded }
             )
-
-            // --- 5. PARTE NUEVA: La lista expandible de paraderos ---
             AnimatedVisibility(visible = isExpanded) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 56.dp) // Alineado
+                        .padding(start = 56.dp)
                 ) {
-                    // Muestra cada estación en la lista del segmento
                     segment.stationsInSegment.forEach { station ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(bottom = 8.dp)
                         ) {
-                            // Viñeta (bullet point)
                             Box(
                                 modifier = Modifier
                                     .size(6.dp)
@@ -352,7 +326,7 @@ fun RouteSegmentItem(
 }
 
 
-// --- TransferItem (Sin cambios) ---
+// --- TransferItem (CORREGIDO) ---
 @Composable
 fun TransferItem(
     message: String
@@ -364,7 +338,8 @@ fun TransferItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector = Icons.Outlined.DirectionsWalk,
+            // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
+            imageVector = Icons.AutoMirrored.Outlined.DirectionsWalk,
             contentDescription = "Transbordo",
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(32.dp)
